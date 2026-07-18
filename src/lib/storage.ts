@@ -166,12 +166,13 @@ export function recomputeWinsFromHistory(
 }
 
 export function mostCommonId(
-  counts: Record<string, number>
+  counts: Record<string, number> | null | undefined
 ): string | null {
+  if (!counts) return null;
   let best: string | null = null;
   let max = 0;
   for (const [id, count] of Object.entries(counts)) {
-    if (count > max) {
+    if (typeof count === "number" && count > max) {
       max = count;
       best = id;
     }
@@ -180,15 +181,65 @@ export function mostCommonId(
 }
 
 export function mostCommonRole(
-  counts: Record<Role, number>
+  counts: Partial<Record<Role, number>> | null | undefined
 ): Role | null {
+  if (!counts) return null;
   let best: Role | null = null;
   let max = 0;
   for (const role of ROLES) {
-    if (counts[role] > max) {
-      max = counts[role];
+    const count = counts[role] ?? 0;
+    if (count > max) {
+      max = count;
       best = role;
     }
   }
   return best;
+}
+
+/** Coerce localStorage stats into a safe shape for the UI. */
+export function normalizePlayerStats(
+  raw: Partial<PlayerStats> | null | undefined,
+  playerId: string
+): PlayerStats {
+  const base = emptyStats(playerId);
+  if (!raw || typeof raw !== "object") return base;
+
+  const roleCounts = { ...base.roleCounts };
+  if (raw.roleCounts && typeof raw.roleCounts === "object") {
+    for (const role of ROLES) {
+      const value = raw.roleCounts[role];
+      roleCounts[role] = typeof value === "number" && value >= 0 ? value : 0;
+    }
+  }
+
+  return {
+    playerId,
+    totalGames:
+      typeof raw.totalGames === "number" && raw.totalGames >= 0
+        ? raw.totalGames
+        : 0,
+    blueAppearances:
+      typeof raw.blueAppearances === "number" && raw.blueAppearances >= 0
+        ? raw.blueAppearances
+        : 0,
+    redAppearances:
+      typeof raw.redAppearances === "number" && raw.redAppearances >= 0
+        ? raw.redAppearances
+        : 0,
+    autofillCount:
+      typeof raw.autofillCount === "number" && raw.autofillCount >= 0
+        ? raw.autofillCount
+        : 0,
+    wins: typeof raw.wins === "number" && raw.wins >= 0 ? raw.wins : 0,
+    losses: typeof raw.losses === "number" && raw.losses >= 0 ? raw.losses : 0,
+    roleCounts,
+    teammateCounts:
+      raw.teammateCounts && typeof raw.teammateCounts === "object"
+        ? raw.teammateCounts
+        : {},
+    opponentCounts:
+      raw.opponentCounts && typeof raw.opponentCounts === "object"
+        ? raw.opponentCounts
+        : {},
+  };
 }

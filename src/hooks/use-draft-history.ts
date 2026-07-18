@@ -12,14 +12,14 @@ const HISTORY_KEY = "customs-draft:history";
 const STATS_KEY = "customs-draft:stats";
 
 export function useDraftHistory() {
-  const [history, setHistory, hydrated] = useLocalStorage<DraftResult[]>(
+  const [history, setHistory, historyHydrated] = useLocalStorage<DraftResult[]>(
     HISTORY_KEY,
     []
   );
-  const [stats, setStats] = useLocalStorage<Record<string, PlayerStats>>(
-    STATS_KEY,
-    {}
-  );
+  const [stats, setStats, statsHydrated] = useLocalStorage<
+    Record<string, PlayerStats>
+  >(STATS_KEY, {});
+  const hydrated = historyHydrated && statsHydrated;
 
   const addDraft = useCallback(
     (draft: DraftResult) => {

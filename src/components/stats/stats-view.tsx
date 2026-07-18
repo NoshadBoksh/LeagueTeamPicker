@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { PLAYERS, getPlayerById } from "@/data/players";
 import { useDraftHistory } from "@/hooks/use-draft-history";
-import { mostCommonId, mostCommonRole } from "@/lib/storage";
+import { mostCommonId, mostCommonRole, normalizePlayerStats } from "@/lib/storage";
 import { ROLE_LABELS } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 
@@ -21,7 +21,8 @@ export function StatsView() {
   }
 
   const playersWithStats = PLAYERS.map((player) => {
-    const s = stats[player.id];
+    const raw = stats[player.id];
+    const s = raw ? normalizePlayerStats(raw, player.id) : null;
     return {
       player,
       stats: s,
@@ -136,16 +137,15 @@ export function StatsView() {
                           ["support", "#3f3f46"],
                         ] as const
                       ).map(([role, color]) => {
+                        const count = s.roleCounts[role] ?? 0;
                         const pct =
-                          s.totalGames > 0
-                            ? (s.roleCounts[role] / s.totalGames) * 100
-                            : 0;
-                        if (pct === 0) return null;
+                          s.totalGames > 0 ? (count / s.totalGames) * 100 : 0;
+                        if (!(pct > 0)) return null;
                         return (
                           <div
                             key={role}
                             style={{ width: `${pct}%`, background: color }}
-                            title={`${ROLE_LABELS[role]}: ${s.roleCounts[role]}`}
+                            title={`${ROLE_LABELS[role]}: ${count}`}
                           />
                         );
                       })}

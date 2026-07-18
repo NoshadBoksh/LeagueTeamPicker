@@ -1,26 +1,105 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0d10;
+  --foreground: #eceef1;
+  --muted: #8a9099;
+  --muted-strong: #6b7280;
+  --surface: #101215;
+  --surface-raised: #15181d;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --accent: #d4d4d8;
+  --blue: #3b82f6;
+  --blue-soft: rgba(59, 130, 246, 0.12);
+  --red: #ef4444;
+  --red-soft: rgba(239, 68, 68, 0.12);
+  --warning: #a1a1aa;
+  /* Keep legacy aliases so existing class names still resolve */
+  --panel: #101215;
+  --ink: #0b0d10;
+  --gold: #d4d4d8;
+  --gold-bright: #f4f4f5;
+  --blue-team: #0f172a;
+  --blue-glow: #3b82f6;
+  --red-team: #1c1214;
+  --red-glow: #ef4444;
+  --tier-s: #e4e4e7;
+  --tier-a: #a1a1aa;
+  --tier-b: #a1a1aa;
+  --tier-c: #71717a;
+  --tier-d: #71717a;
+  --tier-f: #52525b;
+  --radius: 10px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-blue-team: var(--blue-team);
+  --color-blue-glow: var(--blue-glow);
+  --color-red-team: var(--red-team);
+  --color-red-glow: var(--red-glow);
+  --color-tier-s: var(--tier-s);
+  --color-tier-a: var(--tier-a);
+  --color-tier-b: var(--tier-b);
+  --color-tier-c: var(--tier-c);
+  --color-tier-d: var(--tier-d);
+  --color-tier-f: var(--tier-f);
+  --color-blue-soft: var(--blue-soft);
+  --color-red-soft: var(--red-soft);
+  --font-sans: var(--font-geist);
+  --font-display: var(--font-geist);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2e35;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a404a;
+}
+
+.font-display {
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }

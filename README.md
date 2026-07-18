@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Customs Draft
+
+Premium League of Legends custom game drafting for a fixed friend group.
+
+Esports-grade 5v5 team generation with role-aware balancing, random modes, and a Clash-inspired draft reveal.
+
+## Features
+
+- **Tonight's Lobby** — Select exactly 10 players from the hardcoded roster
+- **Competitive** — Fairest teams via role preference + MMR balancing
+- **Role Consider** — Random teams that still respect playable roles
+- **Normal** — Anyone anywhere; no roles, MMR, or tier fairness
+- **Draft Reveal** — Framer Motion esports reveal sequence
+- **Tier List** (`/tierlist`) — Role-specific drag-and-drop ratings (localStorage)
+- **History** (`/history`) — Saved drafts with copy + regenerate
+- **Stats** (`/stats`) — Per-player analytics from draft history
+- **Discord Copy** — Formatted team paste for Discord
+
+## Tech Stack
+
+- Next.js 15 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- Framer Motion
+- Lucide Icons
+- @dnd-kit (tier list)
+- LocalStorage persistence
+- Dark mode only — no backend, auth, or database
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm start` | Serve production build |
+| `npm run lint` | ESLint |
 
-## Learn More
+## Player Data
 
-To learn more about Next.js, take a look at the following resources:
+Edit the roster in [`src/data/players.ts`](src/data/players.ts).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```ts
+{
+  id: "tom",
+  name: "Tom",
+  primaryRoles: ["top"],
+  secondaryRoles: ["jungle"],
+  ratings: {
+    top: "S",
+    jungle: "B",
+    mid: "F",
+    // missing roles = unavailable
+  }
+}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Rating System
 
-## Deploy on Vercel
+| Tier | MMR |
+| --- | --- |
+| S | 10 |
+| A | 8 |
+| B | 6 |
+| C | 4 |
+| D | 2 |
+| F | 1 |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Role assignment uses the rating for the **assigned** role. Autofill applies a strength penalty. Secondary roles are slightly discounted.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tier list edits on `/tierlist` override defaults via localStorage and feed the draft algorithms.
+
+## Draft Modes
+
+### Competitive
+
+Searches hundreds of team partitions, assigns roles with primary → secondary → autofill preference, and minimizes MMR difference + autofill count.
+
+### Role Consider
+
+Randomly splits players into teams, but still assigns roles with playable-role preference.
+
+### Normal
+
+Pure random teams and roles. Ignores role prefs, MMR, and tiers entirely — just who plays where.
+
+## Keyboard Shortcuts
+
+| Key | Action |
+| --- | --- |
+| `Enter` | Generate teams (lobby, 10 selected) |
+| `Space` | Reroll (after reveal) |
+
+## Deploy to Vercel
+
+```bash
+npx vercel
+```
+
+Or connect the GitHub repo in the Vercel dashboard. No environment variables required.
+
+## Project Structure
+
+```
+src/
+  app/                 # Routes: /, /tierlist, /history, /stats
+  components/
+    lobby/             # Player selection + mode select
+    draft/             # Reveal animation + team panels
+    tierlist/          # Drag-and-drop tier editor
+    history/           # Draft history UI
+    stats/             # Analytics UI
+    ui/                # Buttons, cards, badges, avatars
+  data/players.ts      # Hardcoded roster
+  hooks/               # Ratings, history, keyboard
+  lib/
+    draft.ts           # Role assignment + team generation
+    ratings.ts         # MMR / preference helpers
+    discord.ts         # Discord copy format
+    storage.ts         # LocalStorage helpers
+    types.ts           # Shared types
+```
+
+## License
+
+Private friend-group tool. Not affiliated with Riot Games.

@@ -6,15 +6,15 @@ Esports-grade 5v5 team generation with role-aware balancing, random modes, and a
 
 ## Features
 
-- **Tonight's Lobby** — Select exactly 10 players from the hardcoded roster
-- **Competitive** — Fairest teams via role preference + MMR balancing
-- **Role Consider** — Random teams that still respect playable roles
-- **Normal** — Anyone anywhere; no roles, MMR, or tier fairness
-- **Draft Reveal** — Framer Motion esports reveal sequence
-- **Tier List** (`/tierlist`) — Role-specific drag-and-drop ratings (localStorage)
-- **History** (`/history`) — Saved drafts with copy + regenerate
-- **Stats** (`/stats`) — Per-player analytics from draft history
-- **Discord Copy** — Formatted team paste for Discord
+- **Tonight's Lobby** : Select exactly 10 players from the hardcoded roster
+- **Competitive** : Fairest teams via role preference + MMR balancing
+- **Role Consider** : Random teams that still respect playable roles
+- **Normal** : Anyone anywhere; no roles, MMR, or tier fairness
+- **Draft Reveal** : Framer Motion esports reveal sequence
+- **Tier List** (`/tierlist`) : Role-specific drag-and-drop ratings (localStorage)
+- **History** (`/history`) : Saved drafts with copy + regenerate
+- **Stats** (`/stats`) : Per-player analytics from draft history
+- **Discord Copy** : Formatted team paste for Discord
 
 ## Tech Stack
 

@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { PLAYERS } from "@/data/players";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import type { RatingsOverride, Role, Tier } from "@/lib/types";
+import type { RatingKey, RatingsOverride, Tier } from "@/lib/types";
 
 const KEY = "customs-draft:ratings";
 
@@ -14,16 +14,16 @@ export function useRatings() {
   );
 
   const getTier = useCallback(
-    (playerId: string, role: Role): Tier | null => {
+    (playerId: string, key: RatingKey): Tier | null => {
       const player = PLAYERS.find((p) => p.id === playerId);
       if (!player) return null;
-      return overrides[playerId]?.[role] ?? player.ratings[role] ?? null;
+      return overrides[playerId]?.[key] ?? player.ratings[key] ?? null;
     },
     [overrides]
   );
 
   const setTier = useCallback(
-    (playerId: string, role: Role, tier: Tier | null) => {
+    (playerId: string, key: RatingKey, tier: Tier | null) => {
       setOverrides((prev) => {
         const player = PLAYERS.find((p) => p.id === playerId);
         const current = {
@@ -32,9 +32,9 @@ export function useRatings() {
         };
 
         if (tier === null) {
-          delete current[role];
+          delete current[key];
         } else {
-          current[role] = tier;
+          current[key] = tier;
         }
 
         return { ...prev, [playerId]: current };

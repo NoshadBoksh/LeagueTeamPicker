@@ -24,10 +24,10 @@ import { TierBadge } from "@/components/ui/tier-badge";
 import { PLAYERS } from "@/data/players";
 import { useRatings } from "@/hooks/use-ratings";
 import {
-  ROLE_LABELS,
-  ROLES,
+  RATING_KEYS,
+  RATING_LABELS,
   TIERS,
-  type Role,
+  type RatingKey,
   type Tier,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -47,7 +47,7 @@ const tierCollisionDetection: CollisionDetection = (args) => {
 
 export function TierListBoard() {
   const { getTier, setTier, resetRatings, hydrated } = useRatings();
-  const [activeRole, setActiveRole] = useState<Role>("top");
+  const [activeKey, setActiveKey] = useState<RatingKey>("general");
   const [activeId, setActiveId] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
@@ -71,12 +71,12 @@ export function TierListBoard() {
     };
 
     for (const player of PLAYERS) {
-      const tier = getTier(player.id, activeRole);
+      const tier = getTier(player.id, activeKey);
       if (tier) map[tier].push(player.id);
       else map.UNRANKED.push(player.id);
     }
     return map;
-  }, [activeRole, getTier]);
+  }, [activeKey, getTier]);
 
   const onDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
@@ -87,7 +87,7 @@ export function TierListBoard() {
     if (overId === "UNRANKED") return null;
     // Dropped on another player chip id — inherit that player's tier
     if (PLAYERS.some((p) => p.id === overId)) {
-      return getTier(overId, activeRole);
+      return getTier(overId, activeKey);
     }
     return undefined;
   };
@@ -101,10 +101,10 @@ export function TierListBoard() {
     const targetTier = resolveTargetTier(String(over.id));
     if (targetTier === undefined) return;
 
-    const current = getTier(playerId, activeRole);
+    const current = getTier(playerId, activeKey);
     if (current === targetTier) return;
 
-    setTier(playerId, activeRole, targetTier);
+    setTier(playerId, activeKey, targetTier);
   };
 
   const onDragCancel = () => {
@@ -121,7 +121,7 @@ export function TierListBoard() {
         backgroundColor: "#0b0d10",
       });
       const link = document.createElement("a");
-      link.download = `customs-draft-tierlist-${activeRole}.png`;
+      link.download = `customs-draft-tierlist-${activeKey}.png`;
       link.href = dataUrl;
       link.click();
     } finally {
@@ -144,14 +144,15 @@ export function TierListBoard() {
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-3 text-xs font-medium uppercase tracking-[0.16em] text-muted">
-            Role Rankings
+            Rankings
           </p>
           <h1 className="text-3xl font-medium tracking-tight sm:text-4xl">
             Tier List
           </h1>
           <p className="mt-3 max-w-lg text-sm text-muted">
-            Drag players between tiers. Ratings are role-specific and power the
-            draft system. Changes save automatically.
+            <span className="text-foreground/80">General</span> rates overall
+            player strength. Role tabs rate lane-specific skill. Both feed draft
+            MMR. Changes save automatically.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -167,26 +168,28 @@ export function TierListBoard() {
       </div>
 
       <div className="mb-6 flex flex-wrap gap-1.5">
-        {ROLES.map((role) => (
+        {RATING_KEYS.map((key) => (
           <button
-            key={role}
+            key={key}
             type="button"
-            onClick={() => setActiveRole(role)}
+            onClick={() => setActiveKey(key)}
             className={cn(
               "rounded-md border px-3.5 py-1.5 text-xs font-medium transition-colors",
-              activeRole === role
+              activeKey === key
                 ? "border-white/20 bg-surface-raised text-foreground"
                 : "border-white/[0.07] bg-surface text-muted hover:border-white/[0.12] hover:text-foreground"
             )}
           >
-            {ROLE_LABELS[role]}
+            {RATING_LABELS[key]}
           </button>
         ))}
       </div>
 
       <div ref={boardRef} className="space-y-2 rounded-[10px] bg-background p-1">
         <div className="mb-3 px-2 text-xs text-muted">
-          {ROLE_LABELS[activeRole]} · Customs Draft
+          {RATING_LABELS[activeKey]}
+          {activeKey === "general" ? " · overall player" : " · role"} · Customs
+          Draft
         </div>
 
         <DndContext
@@ -201,7 +204,7 @@ export function TierListBoard() {
               key={tier}
               tier={tier}
               playerIds={columns[tier]}
-              role={activeRole}
+              ratingKey={activeKey}
               draggingId={activeId}
             />
           ))}
@@ -226,12 +229,12 @@ export function TierListBoard() {
 function TierRow({
   tier,
   playerIds,
-  role,
+  ratingKey,
   draggingId,
 }: {
   tier: Tier | "UNRANKED";
   playerIds: string[];
-  role: Role;
+  ratingKey: RatingKey;
   draggingId: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: tier });
@@ -263,7 +266,7 @@ function TierRow({
           const player = PLAYERS.find((p) => p.id === id)!;
           return (
             <DraggableChip
-              key={`${role}-${id}`}
+              key={`${ratingKey}-${id}`}
               id={id}
               name={player.name}
               isActive={draggingId === id}

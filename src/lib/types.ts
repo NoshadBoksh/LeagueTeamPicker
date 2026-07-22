@@ -1,5 +1,8 @@
 export type Role = "top" | "jungle" | "mid" | "adc" | "support";
 
+/** Role lanes plus overall player strength. */
+export type RatingKey = Role | "general";
+
 export type Tier = "S" | "A" | "B" | "C" | "D" | "F";
 
 export type DraftMode = "competitive" | "role-consider" | "normal";
@@ -11,15 +14,21 @@ export interface Player {
   name: string;
   primaryRoles: Role[];
   secondaryRoles: Role[];
-  ratings: Partial<Record<Role, Tier>>;
+  ratings: Partial<Record<RatingKey, Tier>>;
 }
 
 export interface AssignedPlayer {
   playerId: string;
   name: string;
   role: Role;
+  /** Tier for the assigned role. */
   tier: Tier;
+  /** Role-based MMR for the assigned role. */
   mmr: number;
+  /** Overall player tier from the General list (null if unranked). */
+  generalTier: Tier | null;
+  /** Overall player MMR from the General list. */
+  generalMmr: number;
   preference: "primary" | "secondary" | "autofill";
   autofilled: boolean;
 }
@@ -27,7 +36,10 @@ export interface AssignedPlayer {
 export interface Team {
   side: TeamSide;
   players: AssignedPlayer[];
+  /** Sum of role-based MMR. */
   mmr: number;
+  /** Sum of general MMR. */
+  generalMmr: number;
 }
 
 export interface GameResult {
@@ -45,12 +57,20 @@ export interface DraftResult {
   timestamp: number;
   blue: Team;
   red: Team;
+  /** Role-MMR difference / balance / favorite. */
   mmrDifference: number;
   balanceScore: number;
   favorite: TeamSide;
   underdog: TeamSide;
   blueWinChance: number;
   redWinChance: number;
+  /** General-MMR difference / balance / favorite (overall player strength). */
+  generalMmrDifference: number;
+  generalBalanceScore: number;
+  generalFavorite: TeamSide;
+  generalUnderdog: TeamSide;
+  generalBlueWinChance: number;
+  generalRedWinChance: number;
   playerIds: string[];
   /** Filled in after the custom game finishes */
   result?: GameResult;
@@ -69,7 +89,7 @@ export interface PlayerStats {
   opponentCounts: Record<string, number>;
 }
 
-export type RatingsOverride = Record<string, Partial<Record<Role, Tier>>>;
+export type RatingsOverride = Record<string, Partial<Record<RatingKey, Tier>>>;
 
 /** Per-player role assignment prefs (separate from tier list ratings). */
 export interface PlayerRolePrefs {
@@ -88,12 +108,26 @@ export const DEFAULT_ROLE_PREFS: PlayerRolePrefs = {
 
 export const ROLES: Role[] = ["top", "jungle", "mid", "adc", "support"];
 
+export const RATING_KEYS: RatingKey[] = [
+  "general",
+  "top",
+  "jungle",
+  "mid",
+  "adc",
+  "support",
+];
+
 export const ROLE_LABELS: Record<Role, string> = {
   top: "Top",
   jungle: "Jungle",
   mid: "Mid",
   adc: "ADC",
   support: "Support",
+};
+
+export const RATING_LABELS: Record<RatingKey, string> = {
+  general: "General",
+  ...ROLE_LABELS,
 };
 
 export const MODE_LABELS: Record<DraftMode, string> = {

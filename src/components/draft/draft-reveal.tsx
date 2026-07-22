@@ -210,54 +210,69 @@ export function DraftReveal({
 }
 
 function DraftStats({ draft }: { draft: DraftResult }) {
-  const isRoleConsider = draft.mode === "role-consider";
-
   return (
-    <div className="mx-auto grid max-w-2xl gap-px overflow-hidden rounded-[10px] border border-white/[0.07] bg-white/[0.04] sm:grid-cols-3">
-      <Stat
-        label="Blue MMR"
-        value={String(draft.blue.mmr)}
-        accent="text-blue-glow"
-      />
-      <Stat
-        label="Red MMR"
-        value={String(draft.red.mmr)}
-        accent="text-red-glow"
-      />
-      {isRoleConsider ? (
-        <Stat
-          label="Favorite"
-          value={draft.favorite === "blue" ? "Blue" : "Red"}
-        />
-      ) : (
-        <Stat
-          label="Balance"
-          value={formatPercent(draft.balanceScore)}
-        />
-      )}
-
-      {isRoleConsider ? (
-        <>
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div>
+        <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-muted">
+          Role MMR — who should win in these lanes
+        </p>
+        <div className="grid gap-px overflow-hidden rounded-[10px] border border-white/[0.07] bg-white/[0.04] sm:grid-cols-3">
           <Stat
-            label="Underdog"
-            value={draft.underdog === "blue" ? "Blue" : "Red"}
+            label="Blue Role"
+            value={String(draft.blue.mmr)}
+            accent="text-blue-glow"
           />
-          <Stat label="Blue Win %" value={formatPercent(draft.blueWinChance)} />
-          <Stat label="Red Win %" value={formatPercent(draft.redWinChance)} />
-        </>
-      ) : (
-        <>
-          <Stat label="Difference" value={String(draft.mmrDifference)} />
+          <Stat
+            label="Red Role"
+            value={String(draft.red.mmr)}
+            accent="text-red-glow"
+          />
           <Stat
             label="Favorite"
             value={draft.favorite === "blue" ? "Blue" : "Red"}
           />
+          <Stat label="Difference" value={String(draft.mmrDifference)} />
+          <Stat label="Balance" value={formatPercent(draft.balanceScore)} />
           <Stat
             label="Win Odds"
             value={`${draft.blueWinChance}–${draft.redWinChance}`}
           />
-        </>
-      )}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-muted">
+          General MMR — overall player strength
+        </p>
+        <div className="grid gap-px overflow-hidden rounded-[10px] border border-white/[0.07] bg-white/[0.04] sm:grid-cols-3">
+          <Stat
+            label="Blue General"
+            value={String(draft.blue.generalMmr)}
+            accent="text-blue-glow"
+          />
+          <Stat
+            label="Red General"
+            value={String(draft.red.generalMmr)}
+            accent="text-red-glow"
+          />
+          <Stat
+            label="Favorite"
+            value={draft.generalFavorite === "blue" ? "Blue" : "Red"}
+          />
+          <Stat
+            label="Difference"
+            value={String(draft.generalMmrDifference)}
+          />
+          <Stat
+            label="Balance"
+            value={formatPercent(draft.generalBalanceScore)}
+          />
+          <Stat
+            label="Win Odds"
+            value={`${draft.generalBlueWinChance}–${draft.generalRedWinChance}`}
+          />
+        </div>
+      </div>
     </div>
   );
 }

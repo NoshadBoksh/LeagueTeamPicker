@@ -125,6 +125,8 @@ function finalizeDraft(
   const red = buildTeam("red", redAssignments);
   const chances = computeWinChances(blue.mmr, red.mmr);
   const favorite = getFavorite(blue.mmr, red.mmr);
+  const generalChances = computeWinChances(blue.generalMmr, red.generalMmr);
+  const generalFavorite = getFavorite(blue.generalMmr, red.generalMmr);
 
   return {
     id: uid(),
@@ -138,6 +140,12 @@ function finalizeDraft(
     underdog: favorite === "blue" ? "red" : "blue",
     blueWinChance: chances.blue,
     redWinChance: chances.red,
+    generalMmrDifference: Math.abs(blue.generalMmr - red.generalMmr),
+    generalBalanceScore: computeBalanceScore(blue.generalMmr, red.generalMmr),
+    generalFavorite,
+    generalUnderdog: generalFavorite === "blue" ? "red" : "blue",
+    generalBlueWinChance: generalChances.blue,
+    generalRedWinChance: generalChances.red,
     playerIds: [...playerIds],
   };
 }
@@ -151,6 +159,8 @@ function assignRolesBlind(players: Player[]): AssignedPlayer[] {
     role: roles[i],
     tier: "C" as const,
     mmr: 0,
+    generalTier: null,
+    generalMmr: 0,
     preference: "autofill" as const,
     autofilled: false,
   }));

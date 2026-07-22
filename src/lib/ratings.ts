@@ -5,6 +5,7 @@ import {
   TIER_VALUES,
   type AssignedPlayer,
   type Player,
+  type RatingKey,
   type RatingsOverride,
   type Role,
   type RolePrefsOverride,
@@ -17,7 +18,7 @@ import { canBeAssignedRole, resolveRolePrefs } from "@/lib/role-prefs";
 export function getEffectiveRatings(
   player: Player,
   overrides?: RatingsOverride
-): Partial<Record<Role, Tier>> {
+): Partial<Record<RatingKey, Tier>> {
   return {
     ...player.ratings,
     ...(overrides?.[player.id] ?? {}),
@@ -26,11 +27,27 @@ export function getEffectiveRatings(
 
 export function getPlayerTier(
   player: Player,
-  role: Role,
+  key: RatingKey,
   overrides?: RatingsOverride
 ): Tier | null {
   const ratings = getEffectiveRatings(player, overrides);
-  return ratings[role] ?? null;
+  return ratings[key] ?? null;
+}
+
+export function getGeneralTier(
+  player: Player,
+  overrides?: RatingsOverride
+): Tier | null {
+  return getPlayerTier(player, "general", overrides);
+}
+
+/** General MMR is raw tier value — no autofill penalty (overall skill). */
+export function getGeneralMmr(
+  player: Player,
+  overrides?: RatingsOverride
+): number {
+  const tier = getGeneralTier(player, overrides) ?? "F";
+  return TIER_VALUES[tier];
 }
 
 /**
@@ -101,6 +118,7 @@ export function toAssignedPlayer(
   const prefs = resolveRolePrefs(rolePrefs, player.id);
   const autofilled =
     prefs.fill || preference === "autofill" || !hasRating;
+  const generalTier = getGeneralTier(player, overrides);
 
   return {
     playerId: player.id,
@@ -108,6 +126,8 @@ export function toAssignedPlayer(
     role,
     tier,
     mmr: getRoleMmr(player, role, overrides, rolePrefs),
+    generalTier,
+    generalMmr: getGeneralMmr(player, overrides),
     preference: autofilled ? "autofill" : preference,
     autofilled,
   };
@@ -125,6 +145,7 @@ export function buildTeam(
     side,
     players: ordered,
     mmr: ordered.reduce((sum, p) => sum + p.mmr, 0),
+    generalMmr: ordered.reduce((sum, p) => sum + p.generalMmr, 0),
   };
 }
 

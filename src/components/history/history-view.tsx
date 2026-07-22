@@ -230,22 +230,46 @@ function HistoryDetail({
       {draft.mode !== "normal" && (
         <div className="grid grid-cols-2 gap-2 text-center text-xs sm:grid-cols-4">
           <MiniStat
-            label="Blue MMR"
+            label="Blue Role"
             value={String(draft.blue.mmr)}
             className="text-blue-glow"
           />
           <MiniStat
-            label="Red MMR"
+            label="Red Role"
             value={String(draft.red.mmr)}
             className="text-red-glow"
           />
           <MiniStat
-            label="Balance"
+            label="Blue General"
+            value={String(draft.blue.generalMmr ?? 0)}
+            className="text-blue-glow"
+          />
+          <MiniStat
+            label="Red General"
+            value={String(draft.red.generalMmr ?? 0)}
+            className="text-red-glow"
+          />
+          <MiniStat
+            label="Role Favorite"
+            value={draft.favorite === "blue" ? "Blue" : "Red"}
+          />
+          <MiniStat
+            label="Gen Favorite"
+            value={
+              (draft.generalFavorite ?? draft.favorite) === "blue"
+                ? "Blue"
+                : "Red"
+            }
+          />
+          <MiniStat
+            label="Role Balance"
             value={formatPercent(draft.balanceScore)}
           />
           <MiniStat
-            label="Favorite"
-            value={draft.favorite === "blue" ? "Blue" : "Red"}
+            label="Gen Balance"
+            value={formatPercent(
+              draft.generalBalanceScore ?? draft.balanceScore
+            )}
           />
         </div>
       )}
@@ -459,7 +483,8 @@ function TeamHistory({
       >
         <span>
           {side === "blue" ? "Blue" : "Red"}
-          {!plain && ` · ${team.mmr}`}
+          {!plain &&
+            ` · Role ${team.mmr} · Gen ${team.generalMmr ?? 0}`}
         </span>
         {won && <span className="normal-case tracking-normal">Winner</span>}
       </div>

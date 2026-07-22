@@ -58,12 +58,20 @@ export function TeamPanel({
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-2 flex items-baseline gap-2"
+              className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1"
             >
-              <span className="text-2xl font-medium tracking-tight tabular-nums text-foreground">
-                {team.mmr}
-              </span>
-              <span className="text-xs text-muted">MMR</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-medium tracking-tight tabular-nums text-foreground">
+                  {team.mmr}
+                </span>
+                <span className="text-xs text-muted">Role MMR</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg font-medium tracking-tight tabular-nums text-foreground/80">
+                  {team.generalMmr}
+                </span>
+                <span className="text-xs text-muted">General</span>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -145,6 +153,11 @@ function RoleSlot({
                   {player.name}
                 </span>
                 {!plain && <TierBadge tier={player.tier} size="sm" />}
+                {!plain && player.generalTier && (
+                  <span className="rounded border border-white/[0.08] px-1 py-0.5 text-[9px] uppercase tracking-wider text-muted">
+                    G {player.generalTier}
+                  </span>
+                )}
               </div>
               {!plain && player.autofilled && (
                 <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted">
@@ -159,7 +172,10 @@ function RoleSlot({
                   {player.mmr}
                 </div>
                 <div className="text-[9px] uppercase tracking-wider text-muted">
-                  MMR
+                  Role
+                </div>
+                <div className="mt-0.5 text-[11px] tabular-nums text-muted">
+                  {player.generalMmr} gen
                 </div>
               </div>
             )}

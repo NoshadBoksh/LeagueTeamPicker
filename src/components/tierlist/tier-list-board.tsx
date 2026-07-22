@@ -5,18 +5,19 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
-  closestCorners,
+  TouchSensor,
+  closestCenter,
+  pointerWithin,
+  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import { useSortable } from "@dnd-kit/sortable";
 import { toPng } from "html-to-image";
 import { Download, RotateCcw } from "lucide-react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { TierBadge } from "@/components/ui/tier-badge";
@@ -31,6 +32,19 @@ import {
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+const TIER_DROP_IDS = new Set<string>([...TIERS, "UNRANKED"]);
+
+/** Prefer the tier row under the pointer; fall back to nearest center. */
+const tierCollisionDetection: CollisionDetection = (args) => {
+  const pointerHits = pointerWithin(args);
+  if (pointerHits.length > 0) {
+    const tierHit = pointerHits.find((hit) => TIER_DROP_IDS.has(String(hit.id)));
+    if (tierHit) return [tierHit];
+    return pointerHits;
+  }
+  return closestCenter(args);
+};
+
 export function TierListBoard() {
   const { getTier, setTier, resetRatings, hydrated } = useRatings();
   const [activeRole, setActiveRole] = useState<Role>("top");
@@ -39,7 +53,10 @@ export function TierListBoard() {
   const [exporting, setExporting] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 160, tolerance: 6 },
+    })
   );
 
   const columns = useMemo(() => {
@@ -65,25 +82,33 @@ export function TierListBoard() {
     setActiveId(String(event.active.id));
   };
 
+  const resolveTargetTier = (overId: string): Tier | null | undefined => {
+    if (TIERS.includes(overId as Tier)) return overId as Tier;
+    if (overId === "UNRANKED") return null;
+    // Dropped on another player chip id — inherit that player's tier
+    if (PLAYERS.some((p) => p.id === overId)) {
+      return getTier(overId, activeRole);
+    }
+    return undefined;
+  };
+
   const onDragEnd = (event: DragEndEvent) => {
-    setActiveId(null);
     const { active, over } = event;
+    setActiveId(null);
     if (!over) return;
 
     const playerId = String(active.id);
-    const overId = String(over.id);
+    const targetTier = resolveTargetTier(String(over.id));
+    if (targetTier === undefined) return;
 
-    let targetTier: Tier | null = null;
-    if (TIERS.includes(overId as Tier)) {
-      targetTier = overId as Tier;
-    } else if (overId === "UNRANKED") {
-      targetTier = null;
-    } else {
-      // Dropped on another player — inherit that player's tier
-      targetTier = getTier(overId, activeRole);
-    }
+    const current = getTier(playerId, activeRole);
+    if (current === targetTier) return;
 
     setTier(playerId, activeRole, targetTier);
+  };
+
+  const onDragCancel = () => {
+    setActiveId(null);
   };
 
   const exportImage = async () => {
@@ -166,9 +191,10 @@ export function TierListBoard() {
 
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCorners}
+          collisionDetection={tierCollisionDetection}
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
+          onDragCancel={onDragCancel}
         >
           {([...TIERS, "UNRANKED"] as const).map((tier) => (
             <TierRow
@@ -176,12 +202,13 @@ export function TierListBoard() {
               tier={tier}
               playerIds={columns[tier]}
               role={activeRole}
+              draggingId={activeId}
             />
           ))}
 
-          <DragOverlay>
+          <DragOverlay dropAnimation={null}>
             {activePlayer ? (
-              <div className="scale-105 opacity-95">
+              <div className="scale-105 cursor-grabbing opacity-95 shadow-lg">
                 <TierPlayerChip
                   name={activePlayer.name}
                   playerId={activePlayer.id}
@@ -200,10 +227,12 @@ function TierRow({
   tier,
   playerIds,
   role,
+  draggingId,
 }: {
   tier: Tier | "UNRANKED";
   playerIds: string[];
   role: Role;
+  draggingId: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: tier });
 
@@ -213,7 +242,7 @@ function TierRow({
       className={cn(
         "flex min-h-[72px] overflow-hidden rounded-[10px] border transition-colors",
         isOver
-          ? "border-white/20 bg-surface-raised"
+          ? "border-white/25 bg-surface-raised"
           : "border-white/[0.07] bg-surface"
       )}
     >
@@ -233,11 +262,16 @@ function TierRow({
         {playerIds.map((id) => {
           const player = PLAYERS.find((p) => p.id === id)!;
           return (
-            <SortableChip key={`${role}-${id}`} id={id} name={player.name} />
+            <DraggableChip
+              key={`${role}-${id}`}
+              id={id}
+              name={player.name}
+              isActive={draggingId === id}
+            />
           );
         })}
         {playerIds.length === 0 && (
-          <span className="self-center px-2 text-xs text-muted/50">
+          <span className="pointer-events-none self-center px-2 text-xs text-muted/50">
             Drop players here
           </span>
         )}
@@ -246,28 +280,28 @@ function TierRow({
   );
 }
 
-function SortableChip({ id, name }: { id: string; name: string }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+function DraggableChip({
+  id,
+  name,
+  isActive,
+}: {
+  id: string;
+  name: string;
+  isActive: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id,
+  });
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
-      className={cn(isDragging && "opacity-30")}
+      className={cn(
+        "touch-none",
+        (isDragging || isActive) && "opacity-35"
+      )}
     >
       <TierPlayerChip name={name} playerId={id} />
     </div>
@@ -284,8 +318,7 @@ function TierPlayerChip({
   dragging?: boolean;
 }) {
   return (
-    <motion.div
-      layout
+    <div
       className={cn(
         "flex cursor-grab items-center gap-2 rounded-md border border-white/[0.07] bg-background/60 px-2.5 py-1.5 active:cursor-grabbing",
         dragging && "border-white/20 bg-surface-raised"
@@ -293,6 +326,6 @@ function TierPlayerChip({
     >
       <PlayerAvatar name={name} playerId={playerId} size="sm" />
       <span className="text-xs font-medium tracking-tight">{name}</span>
-    </motion.div>
+    </div>
   );
 }

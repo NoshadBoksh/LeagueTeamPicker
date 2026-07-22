@@ -16,6 +16,7 @@ import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { useRatings } from "@/hooks/use-ratings";
+import { useRolePrefs } from "@/hooks/use-role-prefs";
 import { copyToClipboard, formatDraftForDiscord } from "@/lib/discord";
 import { generateDraft } from "@/lib/draft";
 import { compressImageFile } from "@/lib/image";
@@ -33,6 +34,7 @@ export function HistoryView() {
   const { history, addDraft, updateDraftResult, clearHistory, hydrated } =
     useDraftHistory();
   const { overrides } = useRatings();
+  const { prefs: rolePrefs } = useRolePrefs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -64,9 +66,13 @@ export function HistoryView() {
   const handleRegenerate = (draft: DraftResult) => {
     const players = getPlayersByIds(draft.playerIds);
     if (players.length !== 10) return;
-    const next = generateDraft(draft.mode, players, overrides);
-    addDraft(next);
-    setSelectedId(next.id);
+    try {
+      const next = generateDraft(draft.mode, players, overrides, rolePrefs);
+      addDraft(next);
+      setSelectedId(next.id);
+    } catch {
+      // Role constraints may block a regenerate; leave history unchanged
+    }
   };
 
   return (

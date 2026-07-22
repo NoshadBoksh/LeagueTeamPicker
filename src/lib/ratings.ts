@@ -7,10 +7,12 @@ import {
   type Player,
   type RatingsOverride,
   type Role,
+  type RolePrefsOverride,
   type Team,
   type TeamSide,
   type Tier,
 } from "@/lib/types";
+import { canBeAssignedRole, resolveRolePrefs } from "@/lib/role-prefs";
 
 export function getEffectiveRatings(
   player: Player,
@@ -31,25 +33,37 @@ export function getPlayerTier(
   return ratings[role] ?? null;
 }
 
+/**
+ * Hard gate for drafts: FILL → any role; otherwise only selected roles.
+ * Unselected roles are never assignable (regardless of tier list).
+ */
 export function canPlayRole(
   player: Player,
   role: Role,
-  overrides?: RatingsOverride
+  _overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): boolean {
-  return getPlayerTier(player, role, overrides) !== null;
+  return canBeAssignedRole(player.id, role, rolePrefs);
 }
 
 export function getPlayableRoles(
   player: Player,
-  overrides?: RatingsOverride
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): Role[] {
-  return ROLES.filter((role) => canPlayRole(player, role, overrides));
+  return ROLES.filter((role) =>
+    canPlayRole(player, role, overrides, rolePrefs)
+  );
 }
 
 export function getRolePreference(
   player: Player,
-  role: Role
+  role: Role,
+  rolePrefs?: RolePrefsOverride
 ): "primary" | "secondary" | "autofill" {
+  const prefs = resolveRolePrefs(rolePrefs, player.id);
+  if (prefs.fill) return "autofill";
+  if (prefs.roles.includes(role)) return "primary";
   if (player.primaryRoles.includes(role)) return "primary";
   if (player.secondaryRoles.includes(role)) return "secondary";
   return "autofill";
@@ -58,12 +72,12 @@ export function getRolePreference(
 export function getRoleMmr(
   player: Player,
   role: Role,
-  overrides?: RatingsOverride
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): number {
   const tier = getPlayerTier(player, role, overrides) ?? "F";
   const base = TIER_VALUES[tier];
-  const preference = getRolePreference(player, role);
-  // Unavailable roles are always treated as hard autofill
+  const preference = getRolePreference(player, role, rolePrefs);
   const forcedAutofill = getPlayerTier(player, role, overrides) === null;
 
   if (preference === "autofill" || forcedAutofill) {
@@ -78,21 +92,24 @@ export function getRoleMmr(
 export function toAssignedPlayer(
   player: Player,
   role: Role,
-  overrides?: RatingsOverride
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): AssignedPlayer {
   const hasRating = getPlayerTier(player, role, overrides) !== null;
   const tier = getPlayerTier(player, role, overrides) ?? "F";
-  const preference =
-    !hasRating ? "autofill" : getRolePreference(player, role);
+  const preference = getRolePreference(player, role, rolePrefs);
+  const prefs = resolveRolePrefs(rolePrefs, player.id);
+  const autofilled =
+    prefs.fill || preference === "autofill" || !hasRating;
 
   return {
     playerId: player.id,
     name: player.name,
     role,
     tier,
-    mmr: getRoleMmr(player, role, overrides),
-    preference,
-    autofilled: preference === "autofill",
+    mmr: getRoleMmr(player, role, overrides, rolePrefs),
+    preference: autofilled ? "autofill" : preference,
+    autofilled,
   };
 }
 

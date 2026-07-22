@@ -14,6 +14,7 @@ import type {
   Player,
   RatingsOverride,
   Role,
+  RolePrefsOverride,
   Team,
 } from "@/lib/types";
 import { ROLES } from "@/lib/types";
@@ -21,8 +22,12 @@ import { shuffle, uid } from "@/lib/utils";
 
 type RoleMap = Record<Role, Player>;
 
-function preferenceScore(player: Player, role: Role): number {
-  const pref = getRolePreference(player, role);
+function preferenceScore(
+  player: Player,
+  role: Role,
+  rolePrefs?: RolePrefsOverride
+): number {
+  const pref = getRolePreference(player, role, rolePrefs);
   if (pref === "primary") return 0;
   if (pref === "secondary") return 3;
   return 12;
@@ -30,108 +35,84 @@ function preferenceScore(player: Player, role: Role): number {
 
 function assignmentCost(
   map: RoleMap,
-  overrides?: RatingsOverride
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): number {
   let cost = 0;
   for (const role of ROLES) {
     const player = map[role];
-    cost += preferenceScore(player, role);
-    if (!canPlayRole(player, role, overrides)) cost += 100;
+    cost += preferenceScore(player, role, rolePrefs);
+    if (!canPlayRole(player, role, overrides, rolePrefs)) cost += 1000;
   }
   return cost;
 }
 
 /**
- * Find a low-cost role assignment for 5 players.
- * Prefers primary > secondary > autofill. Unavailable roles are avoided
- * whenever a valid playable-role solution exists.
+ * Assign roles for 5 players using only allowed roles (selected or FILL).
+ * Returns null when no legal covering exists — never forces a forbidden role.
  */
 export function assignRoles(
   players: Player[],
   overrides?: RatingsOverride,
-  randomize = false
-): AssignedPlayer[] {
+  randomize = false,
+  rolePrefs?: RolePrefsOverride
+): AssignedPlayer[] | null {
   if (players.length !== 5) {
     throw new Error("Role assignment requires exactly 5 players");
   }
 
   const orderedPlayers = randomize ? shuffle(players) : [...players];
 
-  function solve(allowUnavailable: boolean): RoleMap | null {
-    let best: RoleMap | null = null;
-    let bestCost = Infinity;
+  let best: RoleMap | null = null;
+  let bestCost = Infinity;
 
-    function search(
-      index: number,
-      usedRoles: Set<Role>,
-      current: Partial<RoleMap>
-    ) {
-      if (index === orderedPlayers.length) {
-        const map = current as RoleMap;
-        const cost = assignmentCost(map, overrides);
-        const jitter = randomize ? Math.random() * 0.5 : 0;
-        if (cost + jitter < bestCost) {
-          bestCost = cost + jitter;
-          best = { ...map };
-        }
-        return;
+  function search(
+    index: number,
+    usedRoles: Set<Role>,
+    current: Partial<RoleMap>
+  ) {
+    if (index === orderedPlayers.length) {
+      const map = current as RoleMap;
+      const cost = assignmentCost(map, overrides, rolePrefs);
+      const jitter = randomize ? Math.random() * 0.5 : 0;
+      if (cost + jitter < bestCost) {
+        bestCost = cost + jitter;
+        best = { ...map };
       }
-
-      const player = orderedPlayers[index];
-      const playable = ROLES.filter((role) =>
-        canPlayRole(player, role, overrides)
-      );
-      const freeRoles = ROLES.filter((role) => !usedRoles.has(role));
-      const candidates =
-        playable.length > 0
-          ? playable.filter((role) => !usedRoles.has(role))
-          : allowUnavailable
-            ? freeRoles
-            : [];
-
-      // If all playable roles are taken, escalate only when allowed
-      const pool =
-        candidates.length > 0
-          ? candidates
-          : allowUnavailable
-            ? freeRoles
-            : [];
-
-      const ranked = [...pool].sort((a, b) => {
-        const pa = preferenceScore(player, a);
-        const pb = preferenceScore(player, b);
-        if (pa !== pb) return pa - pb;
-        const playableA = canPlayRole(player, a, overrides) ? 0 : 1;
-        const playableB = canPlayRole(player, b, overrides) ? 0 : 1;
-        if (playableA !== playableB) return playableA - playableB;
-        return randomize ? Math.random() - 0.5 : 0;
-      });
-
-      for (const role of ranked) {
-        usedRoles.add(role);
-        current[role] = player;
-        search(index + 1, usedRoles, current);
-        delete current[role];
-        usedRoles.delete(role);
-
-        if (bestCost === 0 && !randomize) return;
-      }
+      return;
     }
 
-    search(0, new Set(), {});
-    return best;
-  }
-
-  const best = solve(false) ?? solve(true);
-
-  if (!best) {
-    const fallback = orderedPlayers.map((player, i) =>
-      toAssignedPlayer(player, ROLES[i], overrides)
+    const player = orderedPlayers[index];
+    const playable = ROLES.filter((role) =>
+      canPlayRole(player, role, overrides, rolePrefs)
     );
-    return fallback;
+    const candidates = playable.filter((role) => !usedRoles.has(role));
+    if (candidates.length === 0) return;
+
+    const ranked = [...candidates].sort((a, b) => {
+      const pa = preferenceScore(player, a, rolePrefs);
+      const pb = preferenceScore(player, b, rolePrefs);
+      if (pa !== pb) return pa - pb;
+      return randomize ? Math.random() - 0.5 : 0;
+    });
+
+    for (const role of ranked) {
+      usedRoles.add(role);
+      current[role] = player;
+      search(index + 1, usedRoles, current);
+      delete current[role];
+      usedRoles.delete(role);
+
+      if (bestCost === 0 && !randomize) return;
+    }
   }
 
-  return ROLES.map((role) => toAssignedPlayer(best[role], role, overrides));
+  search(0, new Set(), {});
+  if (!best) return null;
+
+  return ROLES.map((role) =>
+    toAssignedPlayer(best![role], role, overrides, rolePrefs)
+  );
 }
 
 function finalizeDraft(
@@ -161,7 +142,7 @@ function finalizeDraft(
   };
 }
 
-/** Pure random roles — ignores primary/secondary/playable entirely. */
+/** Pure random roles — ignores role prefs entirely (Normal mode). */
 function assignRolesBlind(players: Player[]): AssignedPlayer[] {
   const roles = shuffle([...ROLES]);
   return shuffle(players).map((player, i) => ({
@@ -191,7 +172,6 @@ function scoreCompetitiveSplit(
     blue.filter((p) => p.preference === "secondary").length +
     red.filter((p) => p.preference === "secondary").length;
 
-  // Role mirror quality: reward similar role tiers across sides
   let roleMirror = 0;
   for (const role of ROLES) {
     const b = blue.find((p) => p.role === role)!;
@@ -204,10 +184,12 @@ function scoreCompetitiveSplit(
 
 /**
  * Competitive mode: search many partitions for fairest balanced teams.
+ * Skips splits that would force a forbidden role.
  */
 export function generateCompetitiveDraft(
   players: Player[],
-  overrides?: RatingsOverride
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): DraftResult {
   if (players.length !== 10) {
     throw new Error("Competitive draft requires exactly 10 players");
@@ -217,24 +199,24 @@ export function generateCompetitiveDraft(
   let bestBlue: AssignedPlayer[] | null = null;
   let bestRed: AssignedPlayer[] | null = null;
 
-  const attempts = 400;
+  const attempts = 500;
 
   for (let i = 0; i < attempts; i++) {
     const shuffled = shuffle(players);
     const groupA = shuffled.slice(0, 5);
     const groupB = shuffled.slice(5);
 
-    const blue = assignRoles(groupA, overrides, false);
-    const red = assignRoles(groupB, overrides, false);
-    const score = scoreCompetitiveSplit(blue, red);
+    const blue = assignRoles(groupA, overrides, false, rolePrefs);
+    const red = assignRoles(groupB, overrides, false, rolePrefs);
+    if (!blue || !red) continue;
 
+    const score = scoreCompetitiveSplit(blue, red);
     if (score < bestScore) {
       bestScore = score;
       bestBlue = blue;
       bestRed = red;
     }
 
-    // Also try swapped groups (same players, other side)
     const swapped = scoreCompetitiveSplit(red, blue);
     if (swapped < bestScore) {
       bestScore = swapped;
@@ -243,7 +225,6 @@ export function generateCompetitiveDraft(
     }
   }
 
-  // Greedy improvement: try swapping one player from each side by role
   if (bestBlue && bestRed) {
     for (let pass = 0; pass < 3; pass++) {
       let improved = false;
@@ -267,10 +248,11 @@ export function generateCompetitiveDraft(
             p.id === bluePlayer.id
         );
 
-        const nb = assignRoles(newBluePlayers, overrides, false);
-        const nr = assignRoles(newRedPlayers, overrides, false);
-        const score = scoreCompetitiveSplit(nb, nr);
+        const nb = assignRoles(newBluePlayers, overrides, false, rolePrefs);
+        const nr = assignRoles(newRedPlayers, overrides, false, rolePrefs);
+        if (!nb || !nr) continue;
 
+        const score = scoreCompetitiveSplit(nb, nr);
         if (score < bestScore) {
           bestScore = score;
           bestBlue = nb;
@@ -282,34 +264,48 @@ export function generateCompetitiveDraft(
     }
   }
 
+  if (!bestBlue || !bestRed) {
+    throw new Error(
+      "Could not build teams with the current role assignments. Give more players FILL or extra roles."
+    );
+  }
+
   return finalizeDraft(
     "competitive",
-    bestBlue!,
-    bestRed!,
+    bestBlue,
+    bestRed,
     players.map((p) => p.id)
   );
 }
 
 /**
- * Role Consider: random teams, but still respect playable roles.
+ * Role Consider: random teams that still respect playable roles.
  */
 export function generateRoleConsiderDraft(
   players: Player[],
-  overrides?: RatingsOverride
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): DraftResult {
   if (players.length !== 10) {
     throw new Error("Role Consider draft requires exactly 10 players");
   }
 
-  const shuffled = shuffle(players);
-  const blue = assignRoles(shuffled.slice(0, 5), overrides, true);
-  const red = assignRoles(shuffled.slice(5), overrides, true);
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const shuffled = shuffle(players);
+    const blue = assignRoles(shuffled.slice(0, 5), overrides, true, rolePrefs);
+    const red = assignRoles(shuffled.slice(5), overrides, true, rolePrefs);
+    if (!blue || !red) continue;
 
-  return finalizeDraft(
-    "role-consider",
-    blue,
-    red,
-    players.map((p) => p.id)
+    return finalizeDraft(
+      "role-consider",
+      blue,
+      red,
+      players.map((p) => p.id)
+    );
+  }
+
+  throw new Error(
+    "Could not build teams with the current role assignments. Give more players FILL or extra roles."
   );
 }
 
@@ -331,13 +327,14 @@ export function generateNormalDraft(players: Player[]): DraftResult {
 export function generateDraft(
   mode: DraftMode,
   players: Player[],
-  overrides?: RatingsOverride
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
 ): DraftResult {
   if (mode === "competitive") {
-    return generateCompetitiveDraft(players, overrides);
+    return generateCompetitiveDraft(players, overrides, rolePrefs);
   }
   if (mode === "role-consider") {
-    return generateRoleConsiderDraft(players, overrides);
+    return generateRoleConsiderDraft(players, overrides, rolePrefs);
   }
   return generateNormalDraft(players);
 }

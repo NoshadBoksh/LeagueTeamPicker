@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { History, LayoutGrid, Swords, Trophy } from "lucide-react";
+import { History, LayoutGrid, Swords, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/", label: "Lobby", icon: Swords },
+  { href: "/roles", label: "Roles", icon: Users },
   { href: "/tierlist", label: "Tier List", icon: LayoutGrid },
   { href: "/history", label: "History", icon: History },
   { href: "/stats", label: "Stats", icon: Trophy },

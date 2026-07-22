@@ -11,6 +11,7 @@ import { PLAYERS, getPlayersByIds } from "@/data/players";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useRatings } from "@/hooks/use-ratings";
+import { useRolePrefs } from "@/hooks/use-role-prefs";
 import { generateDraft } from "@/lib/draft";
 import type { DraftMode, DraftResult } from "@/lib/types";
 
@@ -20,8 +21,10 @@ export function LobbyApp() {
   const [draft, setDraft] = useState<DraftResult | null>(null);
   const [view, setView] = useState<"lobby" | "draft">("lobby");
   const [generating, setGenerating] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   const { overrides } = useRatings();
+  const { prefs: rolePrefs } = useRolePrefs();
   const { addDraft } = useDraftHistory();
 
   const canGenerate = selected.length === 10;
@@ -37,26 +40,46 @@ export function LobbyApp() {
   const runDraft = useCallback(() => {
     if (selected.length !== 10) return;
     setGenerating(true);
+    setDraftError(null);
 
     requestAnimationFrame(() => {
-      const players = getPlayersByIds(selected);
-      const result = generateDraft(mode, players, overrides);
-      setDraft(result);
-      addDraft(result);
-      setView("draft");
-      setGenerating(false);
+      try {
+        const players = getPlayersByIds(selected);
+        const result = generateDraft(mode, players, overrides, rolePrefs);
+        setDraft(result);
+        addDraft(result);
+        setView("draft");
+      } catch (err) {
+        setDraftError(
+          err instanceof Error
+            ? err.message
+            : "Could not generate teams with current role assignments."
+        );
+      } finally {
+        setGenerating(false);
+      }
     });
-  }, [selected, mode, overrides, addDraft]);
+  }, [selected, mode, overrides, rolePrefs, addDraft]);
 
   const reroll = useCallback(() => {
     if (selected.length !== 10) return;
     setGenerating(true);
-    const players = getPlayersByIds(selected);
-    const result = generateDraft(mode, players, overrides);
-    setDraft(result);
-    addDraft(result);
-    setGenerating(false);
-  }, [selected, mode, overrides, addDraft]);
+    setDraftError(null);
+    try {
+      const players = getPlayersByIds(selected);
+      const result = generateDraft(mode, players, overrides, rolePrefs);
+      setDraft(result);
+      addDraft(result);
+    } catch (err) {
+      setDraftError(
+        err instanceof Error
+          ? err.message
+          : "Could not generate teams with current role assignments."
+      );
+    } finally {
+      setGenerating(false);
+    }
+  }, [selected, mode, overrides, rolePrefs, addDraft]);
 
   useKeyboardShortcuts({
     onEnter: () => {
@@ -164,6 +187,12 @@ export function LobbyApp() {
         )}
       </div>
 
+      {draftError && (
+        <div className="mb-5 rounded-[10px] border border-red-glow/30 bg-red-soft px-4 py-3 text-sm text-red-glow">
+          {draftError}
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {sortedPlayers.map((player) => {
@@ -175,6 +204,7 @@ export function LobbyApp() {
                 selected={isSelected}
                 onToggle={() => togglePlayer(player.id)}
                 overrides={overrides}
+                rolePrefs={rolePrefs}
                 disabled={!isSelected && selected.length >= 10}
               />
             );

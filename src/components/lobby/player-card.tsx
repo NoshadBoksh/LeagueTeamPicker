@@ -4,8 +4,14 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { TierBadge } from "@/components/ui/tier-badge";
+import { getPlayerRolePrefs } from "@/lib/role-prefs";
 import { getBestTierSummary } from "@/lib/ratings";
-import { ROLE_LABELS, type Player, type RatingsOverride } from "@/lib/types";
+import {
+  ROLE_LABELS,
+  type Player,
+  type RatingsOverride,
+  type RolePrefsOverride,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface PlayerCardProps {
@@ -13,6 +19,7 @@ interface PlayerCardProps {
   selected: boolean;
   onToggle: () => void;
   overrides?: RatingsOverride;
+  rolePrefs?: RolePrefsOverride;
   disabled?: boolean;
 }
 
@@ -21,14 +28,15 @@ export function PlayerCard({
   selected,
   onToggle,
   overrides,
+  rolePrefs,
   disabled,
 }: PlayerCardProps) {
   const best = getBestTierSummary(player, overrides);
-  const hasRoles =
-    player.primaryRoles.length > 0 || player.secondaryRoles.length > 0;
-  const primaries = player.primaryRoles
-    .map((r) => ROLE_LABELS[r])
-    .join(" · ");
+  const prefs = getPlayerRolePrefs(rolePrefs ?? {}, player.id);
+  const hasRoles = prefs.fill || prefs.roles.length > 0;
+  const label = prefs.fill
+    ? "FILL"
+    : prefs.roles.map((r) => ROLE_LABELS[r]).join(" · ") || "No roles";
 
   return (
     <motion.button
@@ -72,9 +80,7 @@ export function PlayerCard({
           <div className="truncate text-[15px] font-medium tracking-tight text-foreground">
             {player.name}
           </div>
-          <div className="mt-0.5 truncate text-xs text-muted">
-            {hasRoles ? primaries || "Flex" : "Roles not decided"}
-          </div>
+          <div className="mt-0.5 truncate text-xs text-muted">{label}</div>
         </div>
         {best ? (
           <TierBadge tier={best.tier} size="md" />
@@ -88,35 +94,30 @@ export function PlayerCard({
       <div className="relative flex flex-wrap gap-1.5">
         {!hasRoles && (
           <span className="rounded-md border border-white/[0.07] px-2 py-1 text-[11px] text-muted">
-            Not decided
+            Set roles on Roles page
           </span>
         )}
-        {player.primaryRoles.map((role) => {
-          const tier = overrides?.[player.id]?.[role] ?? player.ratings[role];
-          return (
-            <span
-              key={role}
-              className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-[11px] text-foreground/80"
-            >
-              {ROLE_LABELS[role]}
-              {tier && (
-                <span className="font-medium text-foreground/50">{tier}</span>
-              )}
-            </span>
-          );
-        })}
-        {player.secondaryRoles.map((role) => {
-          const tier = overrides?.[player.id]?.[role] ?? player.ratings[role];
-          return (
-            <span
-              key={role}
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] text-muted"
-            >
-              {ROLE_LABELS[role]}
-              {tier && <span className="text-muted/70">{tier}</span>}
-            </span>
-          );
-        })}
+        {prefs.fill && (
+          <span className="rounded-md border border-white/15 bg-white/[0.06] px-2 py-1 text-[11px] text-foreground/80">
+            FILL
+          </span>
+        )}
+        {!prefs.fill &&
+          prefs.roles.map((role) => {
+            const tier =
+              overrides?.[player.id]?.[role] ?? player.ratings[role];
+            return (
+              <span
+                key={role}
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-[11px] text-foreground/80"
+              >
+                {ROLE_LABELS[role]}
+                {tier && (
+                  <span className="font-medium text-foreground/50">{tier}</span>
+                )}
+              </span>
+            );
+          })}
       </div>
     </motion.button>
   );

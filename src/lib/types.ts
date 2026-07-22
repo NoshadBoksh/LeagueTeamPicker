@@ -71,6 +71,21 @@ export interface PlayerStats {
 
 export type RatingsOverride = Record<string, Partial<Record<Role, Tier>>>;
 
+/** Per-player role assignment prefs (separate from tier list ratings). */
+export interface PlayerRolePrefs {
+  /** Roles this player is allowed to play when fill is off. */
+  roles: Role[];
+  /** Play anywhere — ignores `roles` and can take any lane. */
+  fill: boolean;
+}
+
+export type RolePrefsOverride = Record<string, PlayerRolePrefs>;
+
+export const DEFAULT_ROLE_PREFS: PlayerRolePrefs = {
+  roles: [],
+  fill: true,
+};
+
 export const ROLES: Role[] = ["top", "jungle", "mid", "adc", "support"];
 
 export const ROLE_LABELS: Record<Role, string> = {

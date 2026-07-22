@@ -18,21 +18,21 @@ export function ModeSelect({ mode, onChange }: ModeSelectProps) {
         onClick={() => onChange("competitive")}
         icon={<Scale className="h-4 w-4" />}
         title="Competitive"
-        description="Fairest possible game. Role-aware balancing with minimal MMR gap."
+        description="Fairest game. Uses Roles page picks — never assigns a role a player turned off."
       />
       <ModeCard
         active={mode === "role-consider"}
         onClick={() => onChange("role-consider")}
         icon={<Dices className="h-4 w-4" />}
         title="Role Consider"
-        description="Random teams, but still tries to put people on roles they play."
+        description="Random teams that still respect each player's selected roles / FILL."
       />
       <ModeCard
         active={mode === "normal"}
         onClick={() => onChange("normal")}
         icon={<Shuffle className="h-4 w-4" />}
         title="Normal"
-        description="Anyone anywhere. No roles, MMR, or tier fairness considered."
+        description="Anyone anywhere. Ignores Roles page, MMR, and tier fairness."
       />
     </div>
   );

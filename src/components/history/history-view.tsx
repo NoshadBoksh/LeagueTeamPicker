@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Check,
   Copy,
   Eye,
+  Gift,
   ImagePlus,
   RefreshCw,
   Trash2,
@@ -209,6 +211,14 @@ function HistoryDetail({
           </div>
         </div>
         <div className="flex gap-2">
+          {draft.result && (
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/prizes?draft=${draft.id}`}>
+                <Gift />
+                Spin winners
+              </Link>
+            </Button>
+          )}
           <Button size="sm" variant="secondary" onClick={onRegenerate}>
             <RefreshCw />
             Regenerate

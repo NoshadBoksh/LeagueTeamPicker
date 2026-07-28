@@ -148,3 +148,28 @@ export const TIER_VALUES: Record<Tier, number> = {
 };
 
 export const AUTOFILL_PENALTY = 0.65;
+
+/** Points needed to cash in for a mystery prize. */
+export const MYSTERY_PRIZE_COST = 3;
+
+export type PrizeLogKind = "spin" | "cashin";
+
+export interface PrizeLogEntry {
+  id: string;
+  kind: PrizeLogKind;
+  playerId: string;
+  playerName: string;
+  /** +1 for spin, −cost for cash-in. */
+  delta: number;
+  pointsAfter: number;
+  at: number;
+  /** Optional draft the spin came from. */
+  draftId?: string;
+  /** Names on the spun winning team. */
+  teamNames?: string[];
+  /** Label for cash-in (mystery prize). */
+  prizeLabel?: string;
+}
+
+export type PrizePoints = Record<string, number>;
+

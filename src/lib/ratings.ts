@@ -3,6 +3,8 @@ import {
   AUTOFILL_PENALTY,
   ROLES,
   TIER_VALUES,
+  normalizeTier,
+  type ActiveTier,
   type AssignedPlayer,
   type Player,
   type RatingKey,
@@ -29,9 +31,9 @@ export function getPlayerTier(
   player: Player,
   key: RatingKey,
   overrides?: RatingsOverride
-): Tier | null {
+): ActiveTier | null {
   const ratings = getEffectiveRatings(player, overrides);
-  return ratings[key] ?? null;
+  return normalizeTier(ratings[key] ?? null);
 }
 
 export function getGeneralTier(
@@ -46,7 +48,7 @@ export function getGeneralMmr(
   player: Player,
   overrides?: RatingsOverride
 ): number {
-  const tier = getGeneralTier(player, overrides) ?? "F";
+  const tier = getGeneralTier(player, overrides) ?? "C";
   return TIER_VALUES[tier];
 }
 
@@ -92,7 +94,7 @@ export function getRoleMmr(
   overrides?: RatingsOverride,
   rolePrefs?: RolePrefsOverride
 ): number {
-  const tier = getPlayerTier(player, role, overrides) ?? "F";
+  const tier = getPlayerTier(player, role, overrides) ?? "C";
   const base = TIER_VALUES[tier];
   const preference = getRolePreference(player, role, rolePrefs);
   const forcedAutofill = getPlayerTier(player, role, overrides) === null;
@@ -113,7 +115,7 @@ export function toAssignedPlayer(
   rolePrefs?: RolePrefsOverride
 ): AssignedPlayer {
   const hasRating = getPlayerTier(player, role, overrides) !== null;
-  const tier = getPlayerTier(player, role, overrides) ?? "F";
+  const tier = getPlayerTier(player, role, overrides) ?? "C";
   const preference = getRolePreference(player, role, rolePrefs);
   const prefs = resolveRolePrefs(rolePrefs, player.id);
   const autofilled =
@@ -181,12 +183,11 @@ export function getFavorite(blueMmr: number, redMmr: number): TeamSide {
 export function getBestTierSummary(
   player: Player,
   overrides?: RatingsOverride
-): { role: Role; tier: Tier } | null {
-  const ratings = getEffectiveRatings(player, overrides);
-  let best: { role: Role; tier: Tier } | null = null;
+): { role: Role; tier: ActiveTier } | null {
+  let best: { role: Role; tier: ActiveTier } | null = null;
 
   for (const role of ROLES) {
-    const tier = ratings[role];
+    const tier = getPlayerTier(player, role, overrides);
     if (!tier) continue;
     if (!best || TIER_VALUES[tier] > TIER_VALUES[best.tier]) {
       best = { role, tier };

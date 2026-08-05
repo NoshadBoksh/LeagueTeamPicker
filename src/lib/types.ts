@@ -3,7 +3,9 @@ export type Role = "top" | "jungle" | "mid" | "adc" | "support";
 /** Role lanes plus overall player strength. */
 export type RatingKey = Role | "general";
 
+/** Active tiers are S–C. D/F remain only for legacy localStorage coercion. */
 export type Tier = "S" | "A" | "B" | "C" | "D" | "F";
+export type ActiveTier = "S" | "A" | "B" | "C";
 
 export type DraftMode = "competitive" | "role-consider" | "normal";
 
@@ -136,18 +138,43 @@ export const MODE_LABELS: Record<DraftMode, string> = {
   normal: "Normal",
 };
 
-export const TIERS: Tier[] = ["S", "A", "B", "C", "D", "F"];
+/** Tiers shown in the tier list UI (D/F removed). */
+export const TIERS: ActiveTier[] = ["S", "A", "B", "C"];
 
 export const TIER_VALUES: Record<Tier, number> = {
   S: 10,
   A: 8,
   B: 6,
   C: 4,
-  D: 2,
-  F: 1,
+  D: 4, // legacy → treat like C
+  F: 4, // legacy → treat like C
 };
 
+/** Coerce legacy D/F ratings into C. */
+export function normalizeTier(tier: Tier | null | undefined): ActiveTier | null {
+  if (!tier) return null;
+  if (tier === "D" || tier === "F") return "C";
+  return tier;
+}
+
 export const AUTOFILL_PENALTY = 0.65;
+
+/** Sorted pair of player ids that should not share a team. */
+export interface AvoidPair {
+  a: string;
+  b: string;
+}
+
+export type AvoidPairs = AvoidPair[];
+
+export function makeAvoidPair(id1: string, id2: string): AvoidPair | null {
+  if (id1 === id2) return null;
+  return id1 < id2 ? { a: id1, b: id2 } : { a: id2, b: id1 };
+}
+
+export function avoidPairKey(pair: AvoidPair): string {
+  return `${pair.a}|${pair.b}`;
+}
 
 /** Points needed to cash in for a mystery prize. */
 export const MYSTERY_PRIZE_COST = 3;

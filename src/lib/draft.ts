@@ -9,6 +9,7 @@ import {
 } from "@/lib/ratings";
 import type {
   AssignedPlayer,
+  AvoidPairs,
   DraftMode,
   DraftResult,
   Player,
@@ -19,6 +20,25 @@ import type {
 } from "@/lib/types";
 import { ROLES } from "@/lib/types";
 import { shuffle, uid } from "@/lib/utils";
+
+function violatesAvoidPairs(
+  blue: AssignedPlayer[],
+  red: AssignedPlayer[],
+  avoidPairs?: AvoidPairs
+): boolean {
+  if (!avoidPairs?.length) return false;
+  const blueIds = new Set(blue.map((p) => p.playerId));
+  const redIds = new Set(red.map((p) => p.playerId));
+  for (const { a, b } of avoidPairs) {
+    if (
+      (blueIds.has(a) && blueIds.has(b)) ||
+      (redIds.has(a) && redIds.has(b))
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
 
 type RoleMap = Record<Role, Player>;
 
@@ -199,7 +219,8 @@ function scoreCompetitiveSplit(
 export function generateCompetitiveDraft(
   players: Player[],
   overrides?: RatingsOverride,
-  rolePrefs?: RolePrefsOverride
+  rolePrefs?: RolePrefsOverride,
+  avoidPairs?: AvoidPairs
 ): DraftResult {
   if (players.length !== 10) {
     throw new Error("Competitive draft requires exactly 10 players");
@@ -209,7 +230,7 @@ export function generateCompetitiveDraft(
   let bestBlue: AssignedPlayer[] | null = null;
   let bestRed: AssignedPlayer[] | null = null;
 
-  const attempts = 500;
+  const attempts = 600;
 
   for (let i = 0; i < attempts; i++) {
     const shuffled = shuffle(players);
@@ -219,6 +240,7 @@ export function generateCompetitiveDraft(
     const blue = assignRoles(groupA, overrides, false, rolePrefs);
     const red = assignRoles(groupB, overrides, false, rolePrefs);
     if (!blue || !red) continue;
+    if (violatesAvoidPairs(blue, red, avoidPairs)) continue;
 
     const score = scoreCompetitiveSplit(blue, red);
     if (score < bestScore) {
@@ -261,6 +283,7 @@ export function generateCompetitiveDraft(
         const nb = assignRoles(newBluePlayers, overrides, false, rolePrefs);
         const nr = assignRoles(newRedPlayers, overrides, false, rolePrefs);
         if (!nb || !nr) continue;
+        if (violatesAvoidPairs(nb, nr, avoidPairs)) continue;
 
         const score = scoreCompetitiveSplit(nb, nr);
         if (score < bestScore) {
@@ -276,7 +299,7 @@ export function generateCompetitiveDraft(
 
   if (!bestBlue || !bestRed) {
     throw new Error(
-      "Could not build teams with the current role assignments. Give more players FILL or extra roles."
+      "Could not build teams with current role / keep-apart rules. Loosen FILL, roles, or avoid pairs."
     );
   }
 
@@ -294,17 +317,19 @@ export function generateCompetitiveDraft(
 export function generateRoleConsiderDraft(
   players: Player[],
   overrides?: RatingsOverride,
-  rolePrefs?: RolePrefsOverride
+  rolePrefs?: RolePrefsOverride,
+  avoidPairs?: AvoidPairs
 ): DraftResult {
   if (players.length !== 10) {
     throw new Error("Role Consider draft requires exactly 10 players");
   }
 
-  for (let attempt = 0; attempt < 200; attempt++) {
+  for (let attempt = 0; attempt < 300; attempt++) {
     const shuffled = shuffle(players);
     const blue = assignRoles(shuffled.slice(0, 5), overrides, true, rolePrefs);
     const red = assignRoles(shuffled.slice(5), overrides, true, rolePrefs);
     if (!blue || !red) continue;
+    if (violatesAvoidPairs(blue, red, avoidPairs)) continue;
 
     return finalizeDraft(
       "role-consider",
@@ -315,7 +340,7 @@ export function generateRoleConsiderDraft(
   }
 
   throw new Error(
-    "Could not build teams with the current role assignments. Give more players FILL or extra roles."
+    "Could not build teams with current role / keep-apart rules. Loosen FILL, roles, or avoid pairs."
   );
 }
 
@@ -338,13 +363,14 @@ export function generateDraft(
   mode: DraftMode,
   players: Player[],
   overrides?: RatingsOverride,
-  rolePrefs?: RolePrefsOverride
+  rolePrefs?: RolePrefsOverride,
+  avoidPairs?: AvoidPairs
 ): DraftResult {
   if (mode === "competitive") {
-    return generateCompetitiveDraft(players, overrides, rolePrefs);
+    return generateCompetitiveDraft(players, overrides, rolePrefs, avoidPairs);
   }
   if (mode === "role-consider") {
-    return generateRoleConsiderDraft(players, overrides, rolePrefs);
+    return generateRoleConsiderDraft(players, overrides, rolePrefs, avoidPairs);
   }
   return generateNormalDraft(players);
 }

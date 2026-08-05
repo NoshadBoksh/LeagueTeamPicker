@@ -27,8 +27,8 @@ import {
   RATING_KEYS,
   RATING_LABELS,
   TIERS,
+  type ActiveTier,
   type RatingKey,
-  type Tier,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -60,13 +60,11 @@ export function TierListBoard() {
   );
 
   const columns = useMemo(() => {
-    const map: Record<Tier | "UNRANKED", string[]> = {
+    const map: Record<ActiveTier | "UNRANKED", string[]> = {
       S: [],
       A: [],
       B: [],
       C: [],
-      D: [],
-      F: [],
       UNRANKED: [],
     };
 
@@ -82,8 +80,8 @@ export function TierListBoard() {
     setActiveId(String(event.active.id));
   };
 
-  const resolveTargetTier = (overId: string): Tier | null | undefined => {
-    if (TIERS.includes(overId as Tier)) return overId as Tier;
+  const resolveTargetTier = (overId: string): ActiveTier | null | undefined => {
+    if ((TIERS as string[]).includes(overId)) return overId as ActiveTier;
     if (overId === "UNRANKED") return null;
     // Dropped on another player chip id — inherit that player's tier
     if (PLAYERS.some((p) => p.id === overId)) {
@@ -232,7 +230,7 @@ function TierRow({
   ratingKey,
   draggingId,
 }: {
-  tier: Tier | "UNRANKED";
+  tier: ActiveTier | "UNRANKED";
   playerIds: string[];
   ratingKey: RatingKey;
   draggingId: string | null;

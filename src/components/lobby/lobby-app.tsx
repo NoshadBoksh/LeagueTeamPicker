@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { PLAYERS, getPlayersByIds } from "@/data/players";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useRatings } from "@/hooks/use-ratings";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
 import { generateDraft } from "@/lib/draft";
@@ -25,6 +26,7 @@ export function LobbyApp() {
 
   const { overrides } = useRatings();
   const { prefs: rolePrefs } = useRolePrefs();
+  const { pairs: avoidPairs } = useAvoidPairs();
   const { addDraft } = useDraftHistory();
 
   const canGenerate = selected.length === 10;
@@ -45,7 +47,13 @@ export function LobbyApp() {
     requestAnimationFrame(() => {
       try {
         const players = getPlayersByIds(selected);
-        const result = generateDraft(mode, players, overrides, rolePrefs);
+        const result = generateDraft(
+          mode,
+          players,
+          overrides,
+          rolePrefs,
+          avoidPairs
+        );
         setDraft(result);
         addDraft(result);
         setView("draft");
@@ -59,7 +67,7 @@ export function LobbyApp() {
         setGenerating(false);
       }
     });
-  }, [selected, mode, overrides, rolePrefs, addDraft]);
+  }, [selected, mode, overrides, rolePrefs, avoidPairs, addDraft]);
 
   const reroll = useCallback(() => {
     if (selected.length !== 10) return;
@@ -67,7 +75,13 @@ export function LobbyApp() {
     setDraftError(null);
     try {
       const players = getPlayersByIds(selected);
-      const result = generateDraft(mode, players, overrides, rolePrefs);
+      const result = generateDraft(
+        mode,
+        players,
+        overrides,
+        rolePrefs,
+        avoidPairs
+      );
       setDraft(result);
       addDraft(result);
     } catch (err) {
@@ -79,7 +93,7 @@ export function LobbyApp() {
     } finally {
       setGenerating(false);
     }
-  }, [selected, mode, overrides, rolePrefs, addDraft]);
+  }, [selected, mode, overrides, rolePrefs, avoidPairs, addDraft]);
 
   useKeyboardShortcuts({
     onEnter: () => {

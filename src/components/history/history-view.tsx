@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { TierBadge } from "@/components/ui/tier-badge";
+import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { useRatings } from "@/hooks/use-ratings";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
@@ -37,6 +38,7 @@ export function HistoryView() {
     useDraftHistory();
   const { overrides } = useRatings();
   const { prefs: rolePrefs } = useRolePrefs();
+  const { pairs: avoidPairs } = useAvoidPairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -69,7 +71,13 @@ export function HistoryView() {
     const players = getPlayersByIds(draft.playerIds);
     if (players.length !== 10) return;
     try {
-      const next = generateDraft(draft.mode, players, overrides, rolePrefs);
+      const next = generateDraft(
+        draft.mode,
+        players,
+        overrides,
+        rolePrefs,
+        avoidPairs
+      );
       addDraft(next);
       setSelectedId(next.id);
     } catch {
@@ -306,10 +314,10 @@ function GameResultForm({
     existing?.winner ?? "blue"
   );
   const [blueKills, setBlueKills] = useState(
-    existing ? String(existing.blueScore) : ""
+    existing ? String(existing.blueScore) : "0"
   );
   const [redKills, setRedKills] = useState(
-    existing ? String(existing.redScore) : ""
+    existing ? String(existing.redScore) : "0"
   );
   const [image, setImage] = useState<string | undefined>(
     existing?.leaderboardImage
@@ -379,7 +387,7 @@ function GameResultForm({
         <input
           type="number"
           min={0}
-          placeholder="37"
+          placeholder="0"
           value={blueKills}
           onChange={(e) => setBlueKills(e.target.value)}
           className="w-full rounded-md border border-white/[0.08] bg-surface px-3 py-2 text-sm text-blue-glow outline-none focus:border-white/20"
@@ -388,7 +396,7 @@ function GameResultForm({
         <input
           type="number"
           min={0}
-          placeholder="65"
+          placeholder="0"
           value={redKills}
           onChange={(e) => setRedKills(e.target.value)}
           className="w-full rounded-md border border-white/[0.08] bg-surface px-3 py-2 text-sm text-red-glow outline-none focus:border-white/20"

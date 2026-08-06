@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { PLAYERS } from "@/data/players";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAppState } from "@/components/providers/app-state-provider";
 import {
   normalizeTier,
   type ActiveTier,
@@ -10,13 +10,9 @@ import {
   type RatingsOverride,
 } from "@/lib/types";
 
-const KEY = "customs-draft:ratings";
-
 export function useRatings() {
-  const [overrides, setOverrides, hydrated] = useLocalStorage<RatingsOverride>(
-    KEY,
-    {}
-  );
+  const { state, updateState, hydrated } = useAppState();
+  const overrides = state.ratings;
 
   const getTier = useCallback(
     (playerId: string, key: RatingKey): ActiveTier | null => {
@@ -31,11 +27,11 @@ export function useRatings() {
 
   const setTier = useCallback(
     (playerId: string, key: RatingKey, tier: ActiveTier | null) => {
-      setOverrides((prev) => {
+      updateState((prev) => {
         const player = PLAYERS.find((p) => p.id === playerId);
         const current = {
           ...(player?.ratings ?? {}),
-          ...(prev[playerId] ?? {}),
+          ...(prev.ratings[playerId] ?? {}),
         };
 
         if (tier === null) {
@@ -44,15 +40,19 @@ export function useRatings() {
           current[key] = tier;
         }
 
-        return { ...prev, [playerId]: current };
+        const ratings: RatingsOverride = {
+          ...prev.ratings,
+          [playerId]: current,
+        };
+        return { ...prev, ratings };
       });
     },
-    [setOverrides]
+    [updateState]
   );
 
   const resetRatings = useCallback(() => {
-    setOverrides({});
-  }, [setOverrides]);
+    updateState((prev) => ({ ...prev, ratings: {} }));
+  }, [updateState]);
 
   const effectiveOverrides = useMemo(() => overrides, [overrides]);
 

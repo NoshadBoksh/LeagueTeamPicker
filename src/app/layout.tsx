@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { SiteNav } from "@/components/layout/site-nav";
+import { AppStateProvider } from "@/components/providers/app-state-provider";
 import "./globals.css";
 
 const geist = Geist({
@@ -25,10 +26,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geist.variable} font-sans antialiased`}>
-        <div className="relative min-h-screen bg-background">
-          <SiteNav />
-          <main className="relative">{children}</main>
-        </div>
+        <AppStateProvider>
+          <div className="relative min-h-screen bg-background">
+            <SiteNav />
+            <main className="relative">{children}</main>
+          </div>
+        </AppStateProvider>
       </body>
     </html>
   );

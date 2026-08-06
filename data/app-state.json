@@ -1,7 +1,11 @@
 {
   "version": 1,
-  "updatedAt": 1786029534042,
-  "ratings": {},
+  "updatedAt": 1786029644845,
+  "ratings": {
+    "karthik": {
+      "general": "A"
+    }
+  },
   "history": [],
   "stats": {},
   "rolePrefs": {},

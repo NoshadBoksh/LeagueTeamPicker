@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786055996692,
+  "updatedAt": 1786055998961,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -33,7 +33,8 @@
     "jonty": {
       "general": "A",
       "top": "A",
-      "mid": "A"
+      "mid": "A",
+      "adc": "A"
     },
     "noshad": {
       "general": "A",

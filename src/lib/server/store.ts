@@ -9,7 +9,8 @@ import {
 
 const STATE_PATH =
   process.env.GITHUB_STATE_PATH?.trim() || "data/app-state.json";
-const STATE_BRANCH = process.env.GITHUB_STATE_BRANCH?.trim() || "main";
+/** Keep state off `main` so saves don't trigger Vercel production rebuilds. */
+const STATE_BRANCH = process.env.GITHUB_STATE_BRANCH?.trim() || "app-data";
 const LOCAL_FILE = path.join(process.cwd(), STATE_PATH);
 
 function githubRepo(): string {

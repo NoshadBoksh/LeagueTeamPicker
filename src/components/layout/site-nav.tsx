@@ -54,7 +54,11 @@ function SyncBadge() {
           ? "text-amber-400/90"
           : "text-muted"
       )}
-      title="Tier list, history, roles, and prizes sync to shared storage"
+      title={
+        syncStatus === "error"
+          ? "Cloud save failed — changes may not sync to other phones"
+          : "Tier list, history, roles, and prizes sync to shared storage"
+      }
     >
       <Icon
         className={cn(

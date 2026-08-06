@@ -1,0 +1,8 @@
+{
+  "github": {
+    "deploymentEnabled": {
+      "app-data": false
+    }
+  },
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . \":(exclude)data/app-state.json\""
+}

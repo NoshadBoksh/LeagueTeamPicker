@@ -36,7 +36,9 @@ interface AppStateContextValue {
 const AppStateContext = createContext<AppStateContextValue | null>(null);
 
 const SAVE_DEBOUNCE_MS = 450;
+const REFRESH_INTERVAL_MS = 15_000;
 const CACHE_KEY = "customs-draft:shared-cache";
+const MIGRATED_KEY = "customs-draft:migrated-v1";
 
 function writeCache(state: AppState) {
   try {
@@ -56,6 +58,22 @@ function readCache(): AppState | null {
   }
 }
 
+function alreadyMigrated(): boolean {
+  try {
+    return localStorage.getItem(MIGRATED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markMigrated() {
+  try {
+    localStorage.setItem(MIGRATED_KEY, "1");
+  } catch {
+    // ignore
+  }
+}
+
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(emptyAppState);
   const [hydrated, setHydrated] = useState(false);
@@ -66,18 +84,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef(state);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const readyToSave = useRef(false);
+  const saving = useRef(false);
   const mounted = useRef(true);
+  const dirty = useRef(false);
 
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
 
   const persist = useCallback(async (next: AppState, sha: string | null) => {
+    saving.current = true;
     setSyncStatus("saving");
     try {
       const res = await fetch("/api/state", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({ state: next, sha }),
       });
 
@@ -86,11 +108,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           state?: AppState;
           sha?: string | null;
         };
-        // Last-write-wins: retry once with the latest sha.
         if (conflict.sha) {
           const retry = await fetch("/api/state", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
+            cache: "no-store",
             body: JSON.stringify({ state: next, sha: conflict.sha }),
           });
           if (!retry.ok) throw new Error("Conflict retry failed");
@@ -102,6 +124,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           shaRef.current = data.sha;
           if (data.backend) setBackend(data.backend);
           writeCache(data.state);
+          dirty.current = false;
           if (mounted.current) setSyncStatus("saved");
           return;
         }
@@ -123,16 +146,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       shaRef.current = data.sha;
       if (data.backend) setBackend(data.backend);
       writeCache(data.state);
+      dirty.current = false;
       if (mounted.current) setSyncStatus("saved");
     } catch (err) {
       console.error("[app-state] save failed:", err);
       writeCache(next);
       if (mounted.current) setSyncStatus("error");
+    } finally {
+      saving.current = false;
     }
   }, []);
 
   const scheduleSave = useCallback(
     (next: AppState) => {
+      dirty.current = true;
       writeCache(next);
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
@@ -142,66 +169,96 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [persist]
   );
 
-  const refresh = useCallback(async () => {
-    setSyncStatus("loading");
-    try {
-      const res = await fetch("/api/state", { cache: "no-store" });
-      if (!res.ok) throw new Error(`Load failed (${res.status})`);
-      const data = (await res.json()) as {
-        state: AppState;
-        sha: string | null;
-        backend?: string;
-      };
+  const refresh = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      // Don't clobber in-progress local edits with a remote pull.
+      if (dirty.current || saving.current) return;
 
-      let next = mergeAppState(emptyAppState(), data.state);
-      shaRef.current = data.sha;
-      if (data.backend) setBackend(data.backend);
+      if (!opts?.silent) setSyncStatus("loading");
+      try {
+        const res = await fetch("/api/state", { cache: "no-store" });
+        if (!res.ok) throw new Error(`Load failed (${res.status})`);
+        const data = (await res.json()) as {
+          state: AppState;
+          sha: string | null;
+          backend?: string;
+        };
 
-      // One-time migration: lift old localStorage into the shared store.
-      if (isAppStateEmpty(next)) {
-        const legacy = readLegacyLocalState();
-        if (legacy) {
-          next = mergeAppState(next, {
-            ...legacy,
-            updatedAt: Date.now(),
-          });
-          setState(next);
-          stateRef.current = next;
-          writeCache(next);
-          setHydrated(true);
-          readyToSave.current = true;
-          setSyncStatus("saving");
-          await persist(next, shaRef.current);
-          return;
+        let next = mergeAppState(emptyAppState(), data.state);
+        shaRef.current = data.sha;
+        if (data.backend) setBackend(data.backend);
+
+        // One-time migration only — never re-upload empty/stale local data.
+        if (isAppStateEmpty(next) && !alreadyMigrated()) {
+          const legacy = readLegacyLocalState();
+          if (legacy && !isAppStateEmpty(mergeAppState(emptyAppState(), legacy))) {
+            next = mergeAppState(next, {
+              ...legacy,
+              updatedAt: Date.now(),
+            });
+            setState(next);
+            stateRef.current = next;
+            writeCache(next);
+            setHydrated(true);
+            readyToSave.current = true;
+            markMigrated();
+            setSyncStatus("saving");
+            await persist(next, shaRef.current);
+            return;
+          }
+          markMigrated();
         }
-      }
 
-      setState(next);
-      stateRef.current = next;
-      writeCache(next);
-      setHydrated(true);
-      readyToSave.current = true;
-      setSyncStatus("saved");
-    } catch (err) {
-      console.error("[app-state] load failed:", err);
-      const cached = readCache() ?? readLegacyLocalState();
-      if (cached) {
-        const next = mergeAppState(emptyAppState(), cached);
         setState(next);
         stateRef.current = next;
+        writeCache(next);
+        setHydrated(true);
+        readyToSave.current = true;
+        setSyncStatus("saved");
+      } catch (err) {
+        console.error("[app-state] load failed:", err);
+        if (!hydrated) {
+          const cached = readCache() ?? readLegacyLocalState();
+          if (cached) {
+            const next = mergeAppState(emptyAppState(), cached);
+            setState(next);
+            stateRef.current = next;
+          }
+          setHydrated(true);
+          // Do not enable saves while the API is down — avoids silent local-only mode.
+          readyToSave.current = false;
+        }
+        setSyncStatus("error");
       }
-      setHydrated(true);
-      readyToSave.current = true;
-      setSyncStatus("offline");
-    }
-  }, [persist]);
+    },
+    [persist, hydrated]
+  );
 
   useEffect(() => {
     mounted.current = true;
     void refresh();
+
+    const onFocus = () => {
+      void refresh({ silent: true });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refresh({ silent: true });
+      }
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    const interval = window.setInterval(() => {
+      void refresh({ silent: true });
+    }, REFRESH_INTERVAL_MS);
+
     return () => {
       mounted.current = false;
       if (saveTimer.current) clearTimeout(saveTimer.current);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(interval);
     };
   }, [refresh]);
 
@@ -231,7 +288,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         syncStatus,
         backend,
         updateState,
-        refresh,
+        refresh: () => refresh(),
       }}
     >
       {children}

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786056089824,
+  "updatedAt": 1786056091428,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -1157,7 +1157,8 @@
     "kieran": {
       "fill": false,
       "roles": [
-        "top"
+        "top",
+        "mid"
       ]
     }
   },

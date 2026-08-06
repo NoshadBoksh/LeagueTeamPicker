@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786056079707,
+  "updatedAt": 1786056082143,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -1143,6 +1143,15 @@
       "roles": [
         "mid",
         "adc"
+      ]
+    },
+    "gabriel": {
+      "fill": false,
+      "roles": [
+        "jungle",
+        "mid",
+        "adc",
+        "support"
       ]
     }
   },

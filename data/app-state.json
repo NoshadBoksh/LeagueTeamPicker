@@ -1,9 +1,10 @@
 {
   "version": 1,
-  "updatedAt": 1786055970161,
+  "updatedAt": 1786055972118,
   "ratings": {
     "karthik": {
-      "general": "S"
+      "general": "S",
+      "mid": "A"
     },
     "gabriel": {
       "general": "S",
@@ -22,23 +23,25 @@
       "mid": "S"
     },
     "ben": {
-      "general": "A"
+      "general": "A",
+      "mid": "A"
     },
     "jonty": {
       "general": "A",
-      "top": "A"
+      "top": "A",
+      "mid": "A"
     },
     "noshad": {
       "general": "A",
-      "top": "B",
-      "mid": "S"
+      "top": "B"
     },
     "andre": {
       "general": "A",
       "jungle": "A"
     },
     "panda": {
-      "top": "A"
+      "top": "A",
+      "mid": "A"
     },
     "chara": {
       "top": "B"

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786055942747,
+  "updatedAt": 1786055944967,
   "ratings": {
     "karthik": {
       "general": "S"
@@ -40,6 +40,9 @@
     },
     "lukas": {
       "top": "B"
+    },
+    "aman": {
+      "jungle": "A"
     }
   },
   "history": [

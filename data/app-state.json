@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786055972118,
+  "updatedAt": 1786055973846,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -37,7 +37,8 @@
     },
     "andre": {
       "general": "A",
-      "jungle": "A"
+      "jungle": "A",
+      "mid": "A"
     },
     "panda": {
       "top": "A",

@@ -193,6 +193,13 @@ export async function saveAppState(
     return saveToGitHub(next, sha);
   }
 
+  // On Vercel/Netlify, local disk is ephemeral — require a cloud token.
+  if (process.env.VERCEL || process.env.NETLIFY) {
+    throw new Error(
+      "GITHUB_TOKEN is required in production so tier list and history stay saved across deploys"
+    );
+  }
+
   await writeLocalFile(next);
   return { state: next, sha: null, backend: "file" };
 }

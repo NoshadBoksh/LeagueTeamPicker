@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786056009324,
+  "updatedAt": 1786056015356,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -12,7 +12,8 @@
       "general": "S",
       "jungle": "S",
       "mid": "S",
-      "adc": "S"
+      "adc": "S",
+      "support": "S"
     },
     "gerard": {
       "general": "S",

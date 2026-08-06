@@ -1,9 +1,10 @@
 {
   "version": 1,
-  "updatedAt": 1786055967547,
+  "updatedAt": 1786055969115,
   "ratings": {
     "karthik": {
-      "general": "S"
+      "general": "S",
+      "mid": "A"
     },
     "gabriel": {
       "general": "S",
@@ -22,16 +23,17 @@
       "mid": "S"
     },
     "ben": {
-      "general": "A"
+      "general": "A",
+      "mid": "A"
     },
     "jonty": {
       "general": "A",
-      "top": "A"
+      "top": "A",
+      "mid": "A"
     },
     "noshad": {
       "general": "A",
-      "top": "B",
-      "mid": "A"
+      "top": "B"
     },
     "andre": {
       "general": "A",

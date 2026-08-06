@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAppState } from "@/components/providers/app-state-provider";
 import {
   avoidPairKey,
   makeAvoidPair,
@@ -9,10 +9,9 @@ import {
   type AvoidPairs,
 } from "@/lib/types";
 
-const KEY = "customs-draft:avoid-pairs";
-
 export function useAvoidPairs() {
-  const [pairs, setPairs, hydrated] = useLocalStorage<AvoidPairs>(KEY, []);
+  const { state, updateState, hydrated } = useAppState();
+  const pairs = state.avoidPairs;
 
   const hasPair = useCallback(
     (id1: string, id2: string) => {
@@ -28,26 +27,30 @@ export function useAvoidPairs() {
     (id1: string, id2: string) => {
       const pair = makeAvoidPair(id1, id2);
       if (!pair) return;
-      setPairs((prev) => {
+      updateState((prev) => {
         const key = avoidPairKey(pair);
-        if (prev.some((p) => avoidPairKey(p) === key)) return prev;
-        return [...prev, pair];
+        if (prev.avoidPairs.some((p) => avoidPairKey(p) === key)) return prev;
+        const avoidPairs: AvoidPairs = [...prev.avoidPairs, pair];
+        return { ...prev, avoidPairs };
       });
     },
-    [setPairs]
+    [updateState]
   );
 
   const removePair = useCallback(
     (pair: AvoidPair) => {
       const key = avoidPairKey(pair);
-      setPairs((prev) => prev.filter((p) => avoidPairKey(p) !== key));
+      updateState((prev) => ({
+        ...prev,
+        avoidPairs: prev.avoidPairs.filter((p) => avoidPairKey(p) !== key),
+      }));
     },
-    [setPairs]
+    [updateState]
   );
 
   const resetPairs = useCallback(() => {
-    setPairs([]);
-  }, [setPairs]);
+    updateState((prev) => ({ ...prev, avoidPairs: [] }));
+  }, [updateState]);
 
   return {
     pairs,

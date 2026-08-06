@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAppState } from "@/components/providers/app-state-provider";
 import { getPlayerRolePrefs } from "@/lib/role-prefs";
 import {
   type PlayerRolePrefs,
@@ -9,13 +9,9 @@ import {
   type RolePrefsOverride,
 } from "@/lib/types";
 
-const KEY = "customs-draft:role-prefs";
-
 export function useRolePrefs() {
-  const [prefs, setPrefs, hydrated] = useLocalStorage<RolePrefsOverride>(
-    KEY,
-    {}
-  );
+  const { state, updateState, hydrated } = useAppState();
+  const prefs = state.rolePrefs;
 
   const getPrefs = useCallback(
     (playerId: string): PlayerRolePrefs =>
@@ -25,40 +21,42 @@ export function useRolePrefs() {
 
   const setFill = useCallback(
     (playerId: string, fill: boolean) => {
-      setPrefs((prev) => {
-        const current = getPlayerRolePrefs(prev, playerId);
-        return {
-          ...prev,
+      updateState((prev) => {
+        const current = getPlayerRolePrefs(prev.rolePrefs, playerId);
+        const rolePrefs: RolePrefsOverride = {
+          ...prev.rolePrefs,
           [playerId]: { ...current, fill },
         };
+        return { ...prev, rolePrefs };
       });
     },
-    [setPrefs]
+    [updateState]
   );
 
   const toggleRole = useCallback(
     (playerId: string, role: Role) => {
-      setPrefs((prev) => {
-        const current = getPlayerRolePrefs(prev, playerId);
+      updateState((prev) => {
+        const current = getPlayerRolePrefs(prev.rolePrefs, playerId);
         const has = current.roles.includes(role);
         const roles = has
           ? current.roles.filter((r) => r !== role)
           : [...current.roles, role];
-        return {
-          ...prev,
+        const rolePrefs: RolePrefsOverride = {
+          ...prev.rolePrefs,
           [playerId]: {
             fill: false,
             roles,
           },
         };
+        return { ...prev, rolePrefs };
       });
     },
-    [setPrefs]
+    [updateState]
   );
 
   const resetPrefs = useCallback(() => {
-    setPrefs({});
-  }, [setPrefs]);
+    updateState((prev) => ({ ...prev, rolePrefs: {} }));
+  }, [updateState]);
 
   return {
     prefs,

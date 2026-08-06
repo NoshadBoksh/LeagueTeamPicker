@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  // API routes require a Node server (not static export).
   images: {
     unoptimized: true,
   },

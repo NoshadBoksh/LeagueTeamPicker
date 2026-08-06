@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786055995772,
+  "updatedAt": 1786055996692,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -27,7 +27,8 @@
     },
     "ben": {
       "general": "A",
-      "mid": "A"
+      "mid": "A",
+      "adc": "A"
     },
     "jonty": {
       "general": "A",

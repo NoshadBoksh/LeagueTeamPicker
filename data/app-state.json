@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786056036111,
+  "updatedAt": 1786056069792,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -1124,7 +1124,12 @@
     }
   },
   "rolePrefs": {},
-  "avoidPairs": [],
+  "avoidPairs": [
+    {
+      "a": "gabriel",
+      "b": "gerard"
+    }
+  ],
   "prizePoints": {},
   "prizeLog": []
 }

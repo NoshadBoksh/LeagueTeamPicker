@@ -1,23 +1,11 @@
 {
   "version": 1,
-  "updatedAt": 1786027028550,
-  "ratings": {
-    "tom": {
-      "top": "S",
-      "general": "A"
-    }
-  },
+  "updatedAt": 1786027036187,
+  "ratings": {},
   "history": [],
   "stats": {},
   "rolePrefs": {},
-  "avoidPairs": [
-    {
-      "a": "tom",
-      "b": "gerard"
-    }
-  ],
-  "prizePoints": {
-    "tom": 2
-  },
+  "avoidPairs": [],
+  "prizePoints": {},
   "prizeLog": []
 }

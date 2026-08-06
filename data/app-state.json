@@ -1,8 +1,11 @@
 {
   "version": 1,
-  "updatedAt": 1786055890743,
+  "updatedAt": 1786055893277,
   "ratings": {
     "karthik": {
+      "general": "S"
+    },
+    "gabriel": {
       "general": "S"
     }
   },

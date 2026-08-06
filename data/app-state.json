@@ -1,12 +1,165 @@
 {
   "version": 1,
-  "updatedAt": 1786053931044,
+  "updatedAt": 1786053938259,
   "ratings": {
     "karthik": {
       "general": "A"
     }
   },
   "history": [
+    {
+      "id": "msi2ed6y-jqbddle",
+      "mode": "role-consider",
+      "timestamp": 1786053936202,
+      "blue": {
+        "side": "blue",
+        "players": [
+          {
+            "playerId": "gerard",
+            "name": "Gerard",
+            "role": "top",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "chara",
+            "name": "Chara",
+            "role": "jungle",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "andre",
+            "name": "Andre",
+            "role": "mid",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "gabriel",
+            "name": "Gabriel",
+            "role": "adc",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "ben",
+            "name": "Ben",
+            "role": "support",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          }
+        ],
+        "mmr": 15,
+        "generalMmr": 20
+      },
+      "red": {
+        "side": "red",
+        "players": [
+          {
+            "playerId": "karthik",
+            "name": "Karthik",
+            "role": "top",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": "A",
+            "generalMmr": 8,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "jonty",
+            "name": "Jonty",
+            "role": "jungle",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "aman",
+            "name": "Aman",
+            "role": "mid",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "joshuayeahh",
+            "name": "JoshuaYeahh",
+            "role": "adc",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          },
+          {
+            "playerId": "lukas",
+            "name": "Lukas",
+            "role": "support",
+            "tier": "C",
+            "mmr": 3,
+            "generalTier": null,
+            "generalMmr": 4,
+            "preference": "autofill",
+            "autofilled": true
+          }
+        ],
+        "mmr": 15,
+        "generalMmr": 24
+      },
+      "mmrDifference": 0,
+      "balanceScore": 100,
+      "favorite": "blue",
+      "underdog": "red",
+      "blueWinChance": 50,
+      "redWinChance": 50,
+      "generalMmrDifference": 4,
+      "generalBalanceScore": 83,
+      "generalFavorite": "red",
+      "generalUnderdog": "blue",
+      "generalBlueWinChance": 41,
+      "generalRedWinChance": 59,
+      "playerIds": [
+        "ben",
+        "aman",
+        "gabriel",
+        "chara",
+        "andre",
+        "karthik",
+        "joshuayeahh",
+        "jonty",
+        "gerard",
+        "lukas"
+      ]
+    },
     {
       "id": "msi2e7ot-6ddq0n9",
       "mode": "role-consider",
@@ -499,10 +652,10 @@
     },
     "ben": {
       "playerId": "ben",
-      "totalGames": 3,
-      "blueAppearances": 1,
+      "totalGames": 4,
+      "blueAppearances": 2,
       "redAppearances": 2,
-      "autofillCount": 3,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
@@ -510,65 +663,66 @@
         "jungle": 3,
         "mid": 0,
         "adc": 0,
-        "support": 0
+        "support": 1
       },
       "teammateCounts": {
         "noshad": 1,
-        "andre": 2,
+        "andre": 3,
         "panda": 1,
-        "gabriel": 1,
+        "gabriel": 2,
         "lukas": 2,
-        "chara": 1,
-        "gerard": 1,
+        "chara": 2,
+        "gerard": 2,
         "karthik": 1,
         "jonty": 1,
         "joshuayeahh": 1
       },
       "opponentCounts": {
-        "jonty": 2,
-        "karthik": 2,
-        "aman": 3,
+        "jonty": 3,
+        "karthik": 3,
+        "aman": 4,
         "chara": 2,
         "gerard": 2,
-        "joshuayeahh": 1,
+        "joshuayeahh": 2,
         "gabriel": 2,
-        "andre": 1
+        "andre": 1,
+        "lukas": 1
       }
     },
     "andre": {
       "playerId": "andre",
-      "totalGames": 3,
-      "blueAppearances": 2,
+      "totalGames": 4,
+      "blueAppearances": 3,
       "redAppearances": 1,
-      "autofillCount": 3,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
         "top": 0,
         "jungle": 1,
-        "mid": 1,
+        "mid": 2,
         "adc": 0,
         "support": 1
       },
       "teammateCounts": {
         "noshad": 1,
-        "ben": 2,
+        "ben": 3,
         "panda": 1,
-        "gabriel": 2,
+        "gabriel": 3,
         "lukas": 1,
-        "chara": 2,
-        "gerard": 2,
+        "chara": 3,
+        "gerard": 3,
         "aman": 1
       },
       "opponentCounts": {
-        "jonty": 3,
-        "karthik": 3,
-        "aman": 2,
+        "jonty": 4,
+        "karthik": 4,
+        "aman": 3,
         "chara": 1,
         "gerard": 1,
-        "joshuayeahh": 2,
+        "joshuayeahh": 3,
         "gabriel": 1,
-        "lukas": 1,
+        "lukas": 2,
         "ben": 1
       }
     },
@@ -603,150 +757,151 @@
     },
     "gabriel": {
       "playerId": "gabriel",
-      "totalGames": 3,
-      "blueAppearances": 3,
+      "totalGames": 4,
+      "blueAppearances": 4,
       "redAppearances": 0,
-      "autofillCount": 3,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
         "top": 1,
         "jungle": 1,
         "mid": 0,
-        "adc": 0,
+        "adc": 1,
         "support": 1
       },
       "teammateCounts": {
         "noshad": 1,
-        "ben": 1,
-        "andre": 2,
+        "ben": 2,
+        "andre": 3,
         "panda": 1,
         "joshuayeahh": 1,
         "aman": 2,
         "karthik": 1,
         "jonty": 1,
-        "chara": 1,
-        "gerard": 1
+        "chara": 2,
+        "gerard": 2
       },
       "opponentCounts": {
-        "jonty": 2,
-        "karthik": 2,
-        "aman": 1,
+        "jonty": 3,
+        "karthik": 3,
+        "aman": 2,
         "chara": 2,
         "gerard": 2,
-        "lukas": 2,
+        "lukas": 3,
         "ben": 2,
         "andre": 1,
-        "joshuayeahh": 1
+        "joshuayeahh": 2
       }
     },
     "jonty": {
       "playerId": "jonty",
-      "totalGames": 3,
+      "totalGames": 4,
       "blueAppearances": 1,
-      "redAppearances": 2,
-      "autofillCount": 3,
+      "redAppearances": 3,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
         "top": 1,
-        "jungle": 0,
+        "jungle": 1,
         "mid": 0,
         "adc": 1,
         "support": 1
       },
       "teammateCounts": {
-        "karthik": 3,
-        "aman": 2,
+        "karthik": 4,
+        "aman": 3,
         "chara": 1,
         "gerard": 1,
-        "joshuayeahh": 2,
+        "joshuayeahh": 3,
         "gabriel": 1,
-        "lukas": 1,
+        "lukas": 2,
         "ben": 1
       },
       "opponentCounts": {
         "noshad": 1,
-        "ben": 2,
-        "andre": 3,
+        "ben": 3,
+        "andre": 4,
         "panda": 1,
-        "gabriel": 2,
+        "gabriel": 3,
         "lukas": 1,
-        "chara": 2,
-        "gerard": 2,
+        "chara": 3,
+        "gerard": 3,
         "aman": 1
       }
     },
     "karthik": {
       "playerId": "karthik",
-      "totalGames": 3,
+      "totalGames": 4,
       "blueAppearances": 1,
-      "redAppearances": 2,
-      "autofillCount": 3,
+      "redAppearances": 3,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
-        "top": 0,
+        "top": 1,
         "jungle": 1,
         "mid": 1,
         "adc": 1,
         "support": 0
       },
       "teammateCounts": {
-        "jonty": 3,
-        "aman": 2,
+        "jonty": 4,
+        "aman": 3,
         "chara": 1,
         "gerard": 1,
-        "joshuayeahh": 2,
+        "joshuayeahh": 3,
         "gabriel": 1,
-        "lukas": 1,
+        "lukas": 2,
         "ben": 1
       },
       "opponentCounts": {
         "noshad": 1,
-        "ben": 2,
-        "andre": 3,
+        "ben": 3,
+        "andre": 4,
         "panda": 1,
-        "gabriel": 2,
+        "gabriel": 3,
         "lukas": 1,
-        "chara": 2,
-        "gerard": 2,
+        "chara": 3,
+        "gerard": 3,
         "aman": 1
       }
     },
     "aman": {
       "playerId": "aman",
-      "totalGames": 3,
+      "totalGames": 4,
       "blueAppearances": 2,
-      "redAppearances": 1,
-      "autofillCount": 3,
+      "redAppearances": 2,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
         "top": 0,
         "jungle": 0,
-        "mid": 3,
+        "mid": 4,
         "adc": 0,
         "support": 0
       },
       "teammateCounts": {
-        "jonty": 2,
-        "karthik": 2,
+        "jonty": 3,
+        "karthik": 3,
         "chara": 2,
         "gerard": 2,
-        "joshuayeahh": 1,
+        "joshuayeahh": 2,
         "gabriel": 2,
-        "andre": 1
+        "andre": 1,
+        "lukas": 1
       },
       "opponentCounts": {
         "noshad": 1,
-        "ben": 3,
-        "andre": 2,
+        "ben": 4,
+        "andre": 3,
         "panda": 1,
-        "gabriel": 1,
+        "gabriel": 2,
         "lukas": 2,
-        "chara": 1,
-        "gerard": 1,
+        "chara": 2,
+        "gerard": 2,
         "karthik": 1,
         "jonty": 1,
         "joshuayeahh": 1
@@ -754,15 +909,15 @@
     },
     "chara": {
       "playerId": "chara",
-      "totalGames": 3,
-      "blueAppearances": 1,
+      "totalGames": 4,
+      "blueAppearances": 2,
       "redAppearances": 2,
-      "autofillCount": 3,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
         "top": 0,
-        "jungle": 0,
+        "jungle": 1,
         "mid": 1,
         "adc": 2,
         "support": 0
@@ -771,11 +926,11 @@
         "jonty": 1,
         "karthik": 1,
         "aman": 2,
-        "gerard": 3,
+        "gerard": 4,
         "lukas": 1,
-        "ben": 1,
-        "andre": 2,
-        "gabriel": 1
+        "ben": 2,
+        "andre": 3,
+        "gabriel": 2
       },
       "opponentCounts": {
         "noshad": 1,
@@ -783,23 +938,23 @@
         "andre": 1,
         "panda": 1,
         "gabriel": 2,
-        "joshuayeahh": 2,
-        "aman": 1,
-        "karthik": 2,
-        "jonty": 2,
-        "lukas": 1
+        "joshuayeahh": 3,
+        "aman": 2,
+        "karthik": 3,
+        "jonty": 3,
+        "lukas": 2
       }
     },
     "gerard": {
       "playerId": "gerard",
-      "totalGames": 3,
-      "blueAppearances": 1,
+      "totalGames": 4,
+      "blueAppearances": 2,
       "redAppearances": 2,
-      "autofillCount": 3,
+      "autofillCount": 4,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
-        "top": 0,
+        "top": 1,
         "jungle": 0,
         "mid": 0,
         "adc": 1,
@@ -809,11 +964,11 @@
         "jonty": 1,
         "karthik": 1,
         "aman": 2,
-        "chara": 3,
+        "chara": 4,
         "lukas": 1,
-        "ben": 1,
-        "andre": 2,
-        "gabriel": 1
+        "ben": 2,
+        "andre": 3,
+        "gabriel": 2
       },
       "opponentCounts": {
         "noshad": 1,
@@ -821,52 +976,52 @@
         "andre": 1,
         "panda": 1,
         "gabriel": 2,
-        "joshuayeahh": 2,
-        "aman": 1,
-        "karthik": 2,
-        "jonty": 2,
-        "lukas": 1
+        "joshuayeahh": 3,
+        "aman": 2,
+        "karthik": 3,
+        "jonty": 3,
+        "lukas": 2
       }
     },
     "joshuayeahh": {
       "playerId": "joshuayeahh",
-      "totalGames": 2,
+      "totalGames": 3,
       "blueAppearances": 1,
-      "redAppearances": 1,
-      "autofillCount": 2,
+      "redAppearances": 2,
+      "autofillCount": 3,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
         "top": 1,
         "jungle": 0,
         "mid": 0,
-        "adc": 0,
+        "adc": 1,
         "support": 1
       },
       "teammateCounts": {
         "gabriel": 1,
-        "aman": 1,
-        "karthik": 2,
-        "jonty": 2,
-        "lukas": 1,
+        "aman": 2,
+        "karthik": 3,
+        "jonty": 3,
+        "lukas": 2,
         "ben": 1
       },
       "opponentCounts": {
         "lukas": 1,
-        "ben": 1,
-        "chara": 2,
-        "gerard": 2,
-        "andre": 2,
-        "gabriel": 1,
+        "ben": 2,
+        "chara": 3,
+        "gerard": 3,
+        "andre": 3,
+        "gabriel": 2,
         "aman": 1
       }
     },
     "lukas": {
       "playerId": "lukas",
-      "totalGames": 2,
+      "totalGames": 3,
       "blueAppearances": 0,
-      "redAppearances": 2,
-      "autofillCount": 2,
+      "redAppearances": 3,
+      "autofillCount": 3,
       "wins": 0,
       "losses": 0,
       "roleCounts": {
@@ -874,26 +1029,28 @@
         "jungle": 0,
         "mid": 0,
         "adc": 0,
-        "support": 0
+        "support": 1
       },
       "teammateCounts": {
         "ben": 2,
         "chara": 1,
         "gerard": 1,
         "andre": 1,
-        "karthik": 1,
-        "jonty": 1,
-        "joshuayeahh": 1
+        "karthik": 2,
+        "jonty": 2,
+        "joshuayeahh": 2,
+        "aman": 1
       },
       "opponentCounts": {
         "joshuayeahh": 1,
-        "gabriel": 2,
+        "gabriel": 3,
         "aman": 2,
         "karthik": 1,
         "jonty": 1,
-        "andre": 1,
-        "chara": 1,
-        "gerard": 1
+        "andre": 2,
+        "chara": 2,
+        "gerard": 2,
+        "ben": 1
       }
     }
   },

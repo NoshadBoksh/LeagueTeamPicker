@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786056020601,
+  "updatedAt": 1786056023882,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -69,7 +69,8 @@
       "jungle": "A"
     },
     "laxus": {
-      "adc": "S"
+      "adc": "S",
+      "support": "A"
     }
   },
   "history": [

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786056069792,
+  "updatedAt": 1786056074872,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -1123,7 +1123,16 @@
       }
     }
   },
-  "rolePrefs": {},
+  "rolePrefs": {
+    "karthik": {
+      "fill": false,
+      "roles": [
+        "mid",
+        "adc",
+        "support"
+      ]
+    }
+  },
   "avoidPairs": [
     {
       "a": "gabriel",

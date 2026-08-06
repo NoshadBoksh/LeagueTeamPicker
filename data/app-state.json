@@ -1,7 +1,11 @@
 {
   "version": 1,
-  "updatedAt": 1786029055427,
-  "ratings": {},
+  "updatedAt": 1786029533027,
+  "ratings": {
+    "tom": {
+      "mid": "A"
+    }
+  },
   "history": [],
   "stats": {},
   "rolePrefs": {},

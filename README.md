@@ -11,10 +11,11 @@ Esports-grade 5v5 team generation with role-aware balancing, random modes, and a
 - **Role Consider** : Random teams that still respect playable roles
 - **Normal** : Anyone anywhere; no roles, MMR, or tier fairness
 - **Draft Reveal** : Framer Motion esports reveal sequence
-- **Tier List** (`/tierlist`) : Role-specific drag-and-drop ratings (localStorage)
+- **Tier List** (`/tierlist`) : Role-specific drag-and-drop ratings
 - **History** (`/history`) : Saved drafts with copy + regenerate
 - **Stats** (`/stats`) : Per-player analytics from draft history
 - **Discord Copy** : Formatted team paste for Discord
+- **Shared save** : Tier list, history, roles, avoid-pairs, and prizes sync via `/api/state` (GitHub-backed when `GITHUB_TOKEN` is set)
 
 ## Tech Stack
 
@@ -24,8 +25,8 @@ Esports-grade 5v5 team generation with role-aware balancing, random modes, and a
 - Framer Motion
 - Lucide Icons
 - @dnd-kit (tier list)
-- LocalStorage persistence
-- Dark mode only — no backend, auth, or database
+- Shared persistence (`data/app-state.json` via API / GitHub Contents)
+- Dark mode only — no auth
 
 ## Getting Started
 
@@ -35,6 +36,12 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### Shared cloud save (optional)
+
+Copy `.env.example` to `.env.local` and set a GitHub token with **Contents** read/write on this repo. Then tier list / match history / prizes are stored in [`data/app-state.json`](data/app-state.json) and stay in sync across browsers and deploys.
+
+Without a token, the app still saves to the local `data/app-state.json` file on the machine running `next start`.
 
 ## Scripts
 

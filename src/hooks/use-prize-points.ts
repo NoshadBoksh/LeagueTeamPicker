@@ -1,28 +1,17 @@
 "use client";
 
 import { useCallback } from "react";
-import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAppState } from "@/components/providers/app-state-provider";
 import {
   MYSTERY_PRIZE_COST,
   type PrizeLogEntry,
-  type PrizePoints,
 } from "@/lib/types";
 import { uid } from "@/lib/utils";
 
-const POINTS_KEY = "customs-draft:prize-points";
-const LOG_KEY = "customs-draft:prize-log";
-
 export function usePrizePoints() {
-  const [points, setPoints, pointsHydrated] = useLocalStorage<PrizePoints>(
-    POINTS_KEY,
-    {}
-  );
-  const [log, setLog, logHydrated] = useLocalStorage<PrizeLogEntry[]>(
-    LOG_KEY,
-    []
-  );
-
-  const hydrated = pointsHydrated && logHydrated;
+  const { state, updateState, hydrated } = useAppState();
+  const points = state.prizePoints;
+  const log = state.prizeLog;
 
   const getPoints = useCallback(
     (playerId: string) => points[playerId] ?? 0,
@@ -37,29 +26,28 @@ export function usePrizePoints() {
       teamNames: string[];
     }) => {
       const nextPoints = (points[input.playerId] ?? 0) + 1;
-      setPoints((prev) => ({
+      const entry: PrizeLogEntry = {
+        id: uid(),
+        kind: "spin",
+        playerId: input.playerId,
+        playerName: input.playerName,
+        delta: 1,
+        pointsAfter: nextPoints,
+        at: Date.now(),
+        draftId: input.draftId,
+        teamNames: input.teamNames,
+      };
+      updateState((prev) => ({
         ...prev,
-        [input.playerId]: (prev[input.playerId] ?? 0) + 1,
+        prizePoints: {
+          ...prev.prizePoints,
+          [input.playerId]: (prev.prizePoints[input.playerId] ?? 0) + 1,
+        },
+        prizeLog: [entry, ...prev.prizeLog].slice(0, 200),
       }));
-      setLog((prev) =>
-        [
-          {
-            id: uid(),
-            kind: "spin" as const,
-            playerId: input.playerId,
-            playerName: input.playerName,
-            delta: 1,
-            pointsAfter: nextPoints,
-            at: Date.now(),
-            draftId: input.draftId,
-            teamNames: input.teamNames,
-          },
-          ...prev,
-        ].slice(0, 200)
-      );
       return nextPoints;
     },
-    [points, setPoints, setLog]
+    [points, updateState]
   );
 
   const cashIn = useCallback(
@@ -68,7 +56,6 @@ export function usePrizePoints() {
       if (current < MYSTERY_PRIZE_COST) return null;
 
       const nextPoints = current - MYSTERY_PRIZE_COST;
-      setPoints((prev) => ({ ...prev, [playerId]: nextPoints }));
       const entry: PrizeLogEntry = {
         id: uid(),
         kind: "cashin",
@@ -79,16 +66,31 @@ export function usePrizePoints() {
         at: Date.now(),
         prizeLabel: "Mystery Prize",
       };
-      setLog((prev) => [entry, ...prev].slice(0, 200));
+      updateState((prev) => {
+        const live = prev.prizePoints[playerId] ?? 0;
+        if (live < MYSTERY_PRIZE_COST) return prev;
+        const after = live - MYSTERY_PRIZE_COST;
+        return {
+          ...prev,
+          prizePoints: { ...prev.prizePoints, [playerId]: after },
+          prizeLog: [
+            { ...entry, pointsAfter: after },
+            ...prev.prizeLog,
+          ].slice(0, 200),
+        };
+      });
       return entry;
     },
-    [points, setPoints, setLog]
+    [points, updateState]
   );
 
   const resetAll = useCallback(() => {
-    setPoints({});
-    setLog([]);
-  }, [setPoints, setLog]);
+    updateState((prev) => ({
+      ...prev,
+      prizePoints: {},
+      prizeLog: [],
+    }));
+  }, [updateState]);
 
   return {
     points,

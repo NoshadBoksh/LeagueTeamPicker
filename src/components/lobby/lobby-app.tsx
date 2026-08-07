@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Swords } from "lucide-react";
+import { Bookmark, BookmarkCheck, Swords } from "lucide-react";
 import { DraftReveal } from "@/components/draft/draft-reveal";
 import { ModeSelect } from "@/components/lobby/mode-select";
 import { PlayerCard } from "@/components/lobby/player-card";
@@ -14,22 +15,82 @@ import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useRatings } from "@/hooks/use-ratings";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
 import { generateDraft } from "@/lib/draft";
+import { cloneDraftAsRematch } from "@/lib/series";
 import type { DraftMode, DraftResult } from "@/lib/types";
 
 export function LobbyApp() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [selected, setSelected] = useState<string[]>([]);
   const [mode, setMode] = useState<DraftMode>("competitive");
   const [draft, setDraft] = useState<DraftResult | null>(null);
   const [view, setView] = useState<"lobby" | "draft">("lobby");
   const [generating, setGenerating] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
+  const rematchHandled = useRef(false);
 
   const { overrides } = useRatings();
   const { prefs: rolePrefs } = useRolePrefs();
   const { pairs: avoidPairs } = useAvoidPairs();
-  const { addDraft } = useDraftHistory();
+  const {
+    addDraft,
+    history,
+    defaultLobbyIds,
+    setDefaultLobby,
+    clearDefaultLobby,
+    hydrated,
+  } = useDraftHistory();
 
   const canGenerate = selected.length === 10;
+  const defaultIsCurrent =
+    defaultLobbyIds.length === 10 &&
+    defaultLobbyIds.length === selected.length &&
+    defaultLobbyIds.every((id) => selected.includes(id));
+
+  // Load pinned lobby once when empty
+  useEffect(() => {
+    if (!hydrated || rematchHandled.current) return;
+    if (searchParams.get("players") || searchParams.get("sameTeams")) return;
+    if (selected.length === 0 && defaultLobbyIds.length === 10) {
+      setSelected(defaultLobbyIds);
+    }
+  }, [hydrated, defaultLobbyIds, searchParams, selected.length]);
+
+  // Rematch deep-links from History
+  useEffect(() => {
+    if (!hydrated || rematchHandled.current) return;
+
+    const sameTeams = searchParams.get("sameTeams");
+    const playersParam = searchParams.get("players");
+
+    if (sameTeams) {
+      const source = history.find((d) => d.id === sameTeams);
+      if (source) {
+        rematchHandled.current = true;
+        const next = cloneDraftAsRematch(source);
+        setSelected(source.playerIds);
+        setMode(source.mode === "manual" ? "competitive" : source.mode);
+        setDraft(next);
+        setView("draft");
+        router.replace("/", { scroll: false });
+        return;
+      }
+    }
+
+    if (playersParam) {
+      const ids = playersParam
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 10);
+      if (ids.length > 0) {
+        rematchHandled.current = true;
+        setSelected(ids);
+        setView("lobby");
+        router.replace("/", { scroll: false });
+      }
+    }
+  }, [hydrated, history, searchParams, router]);
 
   const togglePlayer = (id: string) => {
     setSelected((prev) => {
@@ -192,17 +253,42 @@ export function LobbyApp() {
         <ModeSelect mode={mode} onChange={setMode} />
       </motion.section>
 
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-medium text-muted">Roster</h2>
-        {selected.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setSelected([])}
-            className="text-xs text-muted transition-colors hover:text-foreground"
-          >
-            Clear selection
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {defaultLobbyIds.length === 10 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setSelected(defaultLobbyIds)}
+            >
+              Use tonight&apos;s 10
+            </Button>
+          )}
+          {canGenerate && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() =>
+                defaultIsCurrent
+                  ? clearDefaultLobby()
+                  : setDefaultLobby(selected)
+              }
+            >
+              {defaultIsCurrent ? <BookmarkCheck /> : <Bookmark />}
+              {defaultIsCurrent ? "Pinned" : "Pin as tonight's 10"}
+            </Button>
+          )}
+          {selected.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelected([])}
+              className="text-xs text-muted transition-colors hover:text-foreground"
+            >
+              Clear selection
+            </button>
+          )}
+        </div>
       </div>
 
       {draftError && (

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -9,8 +10,11 @@ import {
   Eye,
   Gift,
   ImagePlus,
+  Layers,
   RefreshCw,
+  Swords,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import {
@@ -22,33 +26,61 @@ import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useDraftHistory } from "@/hooks/use-draft-history";
+import { usePrizePoints } from "@/hooks/use-prize-points";
 import { useRatings } from "@/hooks/use-ratings";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
-import { copyToClipboard, formatDraftForDiscord } from "@/lib/discord";
+import {
+  copyToClipboard,
+  formatDraftForDiscord,
+  formatNightSummary,
+  getNightDrafts,
+} from "@/lib/discord";
 import { generateDraft } from "@/lib/draft";
 import { compressImageFile } from "@/lib/image";
+import {
+  formatSeriesGameLine,
+  getSeriesGames,
+  getSeriesSpinDraft,
+  isSeriesComplete,
+  seriesScoreLabel,
+} from "@/lib/series";
 import { getPlayersByIds } from "@/data/players";
 import {
   ROLE_LABELS,
   MODE_LABELS,
   type DraftResult,
   type GameResult,
+  type Series,
   type TeamSide,
 } from "@/lib/types";
 import { cn, formatPercent } from "@/lib/utils";
 
 export function HistoryView() {
-  const { history, addDraft, updateDraftResult, clearHistory, hydrated } =
-    useDraftHistory();
+  const router = useRouter();
+  const {
+    history,
+    series,
+    addDraft,
+    updateDraftResult,
+    clearHistory,
+    createSeries,
+    addDraftToSeries,
+    deleteSeries,
+    hydrated,
+  } = useDraftHistory();
+  const { log: prizeLog } = usePrizePoints();
   const { overrides } = useRatings();
   const { prefs: rolePrefs } = useRolePrefs();
   const { pairs: avoidPairs } = useAvoidPairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
+  const [nightCopied, setNightCopied] = useState(false);
 
   const selected =
     history.find((d) => d.id === selectedId) ?? history[0] ?? null;
+
+  const nightDrafts = useMemo(() => getNightDrafts(history), [history]);
 
   useEffect(() => {
     if (!selectedId && history.length > 0) {
@@ -69,6 +101,19 @@ export function HistoryView() {
     if (ok) {
       setCopiedId(draft.id);
       setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  const handleCopyNight = async () => {
+    const text = formatNightSummary({
+      history,
+      series,
+      prizeLog,
+    });
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setNightCopied(true);
+      setTimeout(() => setNightCopied(false), 2000);
     }
   };
 
@@ -97,6 +142,10 @@ export function HistoryView() {
     setShowManual(false);
   };
 
+  const openSeries = series.filter((s) =>
+    s.draftIds.some((id) => history.some((d) => d.id === id))
+  );
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -108,11 +157,16 @@ export function HistoryView() {
             History
           </h1>
           <p className="mt-3 text-sm text-muted">
-            Confirmed games and manual entries. Add the winner, kills, and a
-            leaderboard screenshot after each match.
+            Confirmed games, Bo3 series, rematches, and Discord night summary.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {nightDrafts.length > 0 && (
+            <Button size="sm" variant="outline" onClick={handleCopyNight}>
+              {nightCopied ? <Check /> : <Copy />}
+              {nightCopied ? "Night copied" : "Copy night summary"}
+            </Button>
+          )}
           {!showManual && (
             <ManualEntryButton onClick={() => setShowManual(true)} />
           )}
@@ -133,6 +187,28 @@ export function HistoryView() {
             onSave={handleManualSave}
             onCancel={() => setShowManual(false)}
           />
+        </div>
+      )}
+
+      {openSeries.length > 0 && (
+        <div className="mb-8 space-y-3">
+          <h2 className="text-sm font-medium text-muted">Best of 3 series</h2>
+          {openSeries.map((s) => (
+            <SeriesCard
+              key={s.id}
+              series={s}
+              history={history}
+              onDelete={() => deleteSeries(s.id)}
+              onSpin={() => {
+                const clincher = getSeriesSpinDraft(s, history);
+                if (clincher) {
+                  router.push(`/prizes?series=${s.id}&draft=${clincher.id}`);
+                } else {
+                  router.push(`/prizes?series=${s.id}`);
+                }
+              }}
+            />
+          ))}
         </div>
       )}
 
@@ -168,6 +244,7 @@ export function HistoryView() {
                   <div>
                     <div className="text-sm font-medium tracking-tight">
                       {MODE_LABELS[draft.mode]}
+                      {draft.seriesId ? " · Bo3" : ""}
                     </div>
                     <div className="mt-1 text-xs text-muted">
                       {new Date(draft.timestamp).toLocaleString()}
@@ -202,9 +279,23 @@ export function HistoryView() {
             {selected ? (
               <HistoryDetail
                 draft={selected}
+                series={series}
                 copied={copiedId === selected.id}
                 onCopy={() => handleCopy(selected)}
                 onRegenerate={() => handleRegenerate(selected)}
+                onSameTen={() =>
+                  router.push(`/?players=${selected.playerIds.join(",")}`)
+                }
+                onSameTeams={() =>
+                  router.push(`/?sameTeams=${selected.id}`)
+                }
+                onStartSeries={() => {
+                  const id = createSeries([selected.id]);
+                  void id;
+                }}
+                onAddToSeries={(seriesId) =>
+                  addDraftToSeries(seriesId, selected.id)
+                }
                 onSaveResult={(result) =>
                   updateDraftResult(selected.id, result)
                 }
@@ -223,21 +314,88 @@ export function HistoryView() {
   );
 }
 
+function SeriesCard({
+  series,
+  history,
+  onDelete,
+  onSpin,
+}: {
+  series: Series;
+  history: DraftResult[];
+  onDelete: () => void;
+  onSpin: () => void;
+}) {
+  const games = getSeriesGames(series, history);
+  const complete = isSeriesComplete(series, history);
+  const score = seriesScoreLabel(series, history);
+
+  return (
+    <div className="rounded-[10px] border border-white/[0.1] bg-surface-raised px-4 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Layers className="h-4 w-4 opacity-70" />
+            {series.label}
+          </div>
+          <div className="mt-1 text-xs text-muted">
+            {score}
+            {complete ? " · complete" : " · in progress"}
+            {series.spunPlayerName
+              ? ` · spun ${series.spunPlayerName}`
+              : ""}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            disabled={!complete && games.every((g) => !g.result)}
+            onClick={onSpin}
+          >
+            <Gift />
+            Spin winners
+          </Button>
+          <Button size="sm" variant="ghost" onClick={onDelete}>
+            <Trash2 />
+          </Button>
+        </div>
+      </div>
+      <div className="mt-3 space-y-1 text-xs text-muted">
+        {games.map((g, i) => (
+          <div key={g.id}>{formatSeriesGameLine(g, i)}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function HistoryDetail({
   draft,
+  series,
   copied,
   onCopy,
   onRegenerate,
+  onSameTen,
+  onSameTeams,
+  onStartSeries,
+  onAddToSeries,
   onSaveResult,
   onClearResult,
 }: {
   draft: DraftResult;
+  series: Series[];
   copied: boolean;
   onCopy: () => void;
   onRegenerate: () => void;
+  onSameTen: () => void;
+  onSameTeams: () => void;
+  onStartSeries: () => void;
+  onAddToSeries: (seriesId: string) => void;
   onSaveResult: (result: GameResult) => void;
   onClearResult: () => void;
 }) {
+  const openSeries = series.filter((s) => s.draftIds.length < 3);
+  const inSeries = series.find((s) => s.id === draft.seriesId);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -247,26 +405,70 @@ function HistoryDetail({
           </div>
           <div className="mt-0.5 text-xs text-muted">
             {new Date(draft.timestamp).toLocaleString()}
+            {inSeries ? ` · ${inSeries.label}` : ""}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {draft.result && (
             <Button size="sm" variant="outline" asChild>
-              <Link href={`/prizes?draft=${draft.id}`}>
+              <Link
+                href={
+                  draft.seriesId
+                    ? `/prizes?series=${draft.seriesId}&draft=${draft.id}`
+                    : `/prizes?draft=${draft.id}`
+                }
+              >
                 <Gift />
                 Spin winners
               </Link>
             </Button>
           )}
-          <Button size="sm" variant="secondary" onClick={onRegenerate}>
-            <RefreshCw />
-            Regenerate
-          </Button>
           <Button size="sm" onClick={onCopy}>
             {copied ? <Check /> : <Copy />}
             {copied ? "Copied" : "Copy"}
           </Button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="secondary" onClick={onSameTen}>
+          <Users />
+          Same 10, new roll
+        </Button>
+        <Button size="sm" variant="secondary" onClick={onSameTeams}>
+          <Swords />
+          Same teams again
+        </Button>
+        <Button size="sm" variant="outline" onClick={onRegenerate}>
+          <RefreshCw />
+          Regenerate here
+        </Button>
+      </div>
+
+      <div className="rounded-[10px] border border-white/[0.07] bg-background/50 p-3">
+        <div className="mb-2 text-xs font-medium text-muted">Bo3 series</div>
+        {inSeries ? (
+          <p className="text-sm">
+            In <span className="font-medium">{inSeries.label}</span>
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={onStartSeries}>
+              <Layers />
+              Start Bo3 with this game
+            </Button>
+            {openSeries.map((s) => (
+              <Button
+                key={s.id}
+                size="sm"
+                variant="ghost"
+                onClick={() => onAddToSeries(s.id)}
+              >
+                Add to {s.label}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
       <GameResultForm

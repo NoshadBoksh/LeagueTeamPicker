@@ -80,6 +80,21 @@ export interface DraftResult {
   playerIds: string[];
   /** Filled in after the custom game finishes */
   result?: GameResult;
+  /** Optional Best-of-3 series this game belongs to. */
+  seriesId?: string;
+}
+
+/** A night’s Best-of-3 (or shorter) custom series. */
+export interface Series {
+  id: string;
+  /** Display label, e.g. "Friday customs". */
+  label: string;
+  draftIds: string[];
+  createdAt: number;
+  /** Set when a prize spin has been done for this series. */
+  spunAt?: number;
+  spunPlayerId?: string;
+  spunPlayerName?: string;
 }
 
 export interface PlayerStats {
@@ -184,24 +199,27 @@ export function avoidPairKey(pair: AvoidPair): string {
 /** Points needed to cash in for a mystery prize. */
 export const MYSTERY_PRIZE_COST = 3;
 
-export type PrizeLogKind = "spin" | "cashin";
+export type PrizeLogKind = "spin" | "cashin" | "adjust" | "undo";
 
 export interface PrizeLogEntry {
   id: string;
   kind: PrizeLogKind;
   playerId: string;
   playerName: string;
-  /** +1 for spin, −cost for cash-in. */
+  /** +1 for spin, −cost for cash-in, arbitrary for adjust/undo. */
   delta: number;
   pointsAfter: number;
   at: number;
   /** Optional draft the spin came from. */
   draftId?: string;
+  /** Optional series the spin came from. */
+  seriesId?: string;
   /** Names on the spun winning team. */
   teamNames?: string[];
   /** Label for cash-in (mystery prize). */
   prizeLabel?: string;
+  /** Note for manual adjusts. */
+  note?: string;
 }
 
 export type PrizePoints = Record<string, number>;
-

@@ -7,7 +7,13 @@ import { PrizesView } from "@/components/prizes/prizes-view";
 function PrizesPageInner() {
   const params = useSearchParams();
   const draftId = params.get("draft");
-  return <PrizesView initialDraftId={draftId} />;
+  const seriesId = params.get("series");
+  return (
+    <PrizesView
+      initialDraftId={draftId}
+      initialSeriesId={seriesId}
+    />
+  );
 }
 
 export default function PrizesPage() {

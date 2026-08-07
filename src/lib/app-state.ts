@@ -6,6 +6,7 @@ import type {
   RatingsOverride,
   RolePrefsOverride,
   PlayerStats,
+  Series,
 } from "@/lib/types";
 
 export const APP_STATE_VERSION = 1;
@@ -21,6 +22,10 @@ export interface AppState {
   avoidPairs: AvoidPairs;
   prizePoints: PrizePoints;
   prizeLog: PrizeLogEntry[];
+  /** Best-of-3 (or shorter) series for a customs night. */
+  series: Series[];
+  /** Pinned “who’s here tonight” lobby (0 or 10 player ids). */
+  defaultLobbyIds: string[];
 }
 
 export function emptyAppState(): AppState {
@@ -34,6 +39,8 @@ export function emptyAppState(): AppState {
     avoidPairs: [],
     prizePoints: {},
     prizeLog: [],
+    series: [],
+    defaultLobbyIds: [],
   };
 }
 
@@ -45,7 +52,9 @@ export function isAppStateEmpty(state: AppState): boolean {
     Object.keys(state.rolePrefs).length === 0 &&
     state.avoidPairs.length === 0 &&
     Object.keys(state.prizePoints).length === 0 &&
-    state.prizeLog.length === 0
+    state.prizeLog.length === 0 &&
+    state.series.length === 0 &&
+    state.defaultLobbyIds.length === 0
   );
 }
 
@@ -134,6 +143,8 @@ export function mergeAppState(
     avoidPairs: patch.avoidPairs ?? base.avoidPairs,
     prizePoints: patch.prizePoints ?? base.prizePoints,
     prizeLog: patch.prizeLog ?? base.prizeLog,
+    series: patch.series ?? base.series,
+    defaultLobbyIds: patch.defaultLobbyIds ?? base.defaultLobbyIds,
   };
 }
 
@@ -153,6 +164,7 @@ export function trimStateForPersist(state: AppState, keepImages = 12): AppState 
     version: APP_STATE_VERSION,
     history,
     prizeLog: state.prizeLog.slice(0, 200),
+    series: state.series.slice(0, 50),
   };
 }
 
@@ -185,6 +197,10 @@ export function normalizeAppState(raw: unknown): AppState {
         : {},
     prizeLog: Array.isArray(o.prizeLog)
       ? (o.prizeLog as PrizeLogEntry[])
+      : [],
+    series: Array.isArray(o.series) ? (o.series as Series[]) : [],
+    defaultLobbyIds: Array.isArray(o.defaultLobbyIds)
+      ? (o.defaultLobbyIds as string[]).filter((id) => typeof id === "string")
       : [],
   };
 }

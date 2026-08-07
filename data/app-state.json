@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786108710418,
+  "updatedAt": 1786120551362,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -686,5 +686,7 @@
     "noshad": 0,
     "panda": 0
   },
-  "prizeLog": []
+  "prizeLog": [],
+  "series": [],
+  "defaultLobbyIds": []
 }

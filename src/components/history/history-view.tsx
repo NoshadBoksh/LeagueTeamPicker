@@ -23,6 +23,7 @@ import {
 } from "@/components/history/manual-entry-form";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { RoleIcon } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useDraftHistory } from "@/hooks/use-draft-history";
@@ -742,6 +743,12 @@ function TeamHistory({
       <div className="space-y-2.5">
         {team.players.map((p) => (
           <div key={p.playerId} className="flex items-center gap-2.5">
+            <RoleIcon
+              role={p.role}
+              size="sm"
+              className="opacity-70"
+              title={ROLE_LABELS[p.role]}
+            />
             <PlayerAvatar name={p.name} playerId={p.playerId} size="sm" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-medium">{p.name}</div>

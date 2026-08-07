@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { RoleLabel } from "@/components/ui/role-icon";
 import { PLAYERS, getPlayerById } from "@/data/players";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { mostCommonId, mostCommonRole, normalizePlayerStats } from "@/lib/storage";
@@ -113,7 +114,13 @@ export function StatsView() {
                     />
                     <StatCell
                       label="Main Role"
-                      value={mostRole ? ROLE_LABELS[mostRole] : "—"}
+                      value={
+                        mostRole ? (
+                          <RoleLabel role={mostRole} size="xs" />
+                        ) : (
+                          "—"
+                        )
+                      }
                     />
                     <StatCell
                       label="Autofills"
@@ -167,7 +174,7 @@ function StatCell({
   accent,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   accent?: string;
 }) {
   return (

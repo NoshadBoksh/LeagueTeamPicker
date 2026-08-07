@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { RoleIcon } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
 import {
   ROLE_LABELS,
@@ -114,7 +115,8 @@ function RoleSlot({
 
   return (
     <div className="relative min-h-[68px] overflow-hidden rounded-[8px] border border-white/[0.05] bg-background/50">
-      <div className="absolute left-3.5 top-2.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
+      <div className="absolute left-3.5 top-2.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
+        <RoleIcon role={player.role} size="xs" className="opacity-80" />
         {ROLE_LABELS[player.role]}
       </div>
 

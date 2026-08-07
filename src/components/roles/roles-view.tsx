@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { RotateCcw, UserX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { RoleIcon, RoleLabel } from "@/components/ui/role-icon";
 import { PLAYERS, getPlayerById } from "@/data/players";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
@@ -88,12 +89,22 @@ export function RolesView() {
                   <div className="truncate text-sm font-medium tracking-tight">
                     {player.name}
                   </div>
-                  <div className="text-xs text-muted">
-                    {prefs.fill
-                      ? "FILL — any role"
-                      : prefs.roles.length === 0
-                        ? "No roles selected"
-                        : prefs.roles.map((r) => ROLE_LABELS[r]).join(" · ")}
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                    {prefs.fill ? (
+                      "FILL — any role"
+                    ) : prefs.roles.length === 0 ? (
+                      "No roles selected"
+                    ) : (
+                      prefs.roles.map((r) => (
+                        <span
+                          key={r}
+                          className="inline-flex items-center gap-1"
+                        >
+                          <RoleIcon role={r} size="xs" className="opacity-70" />
+                          {ROLE_LABELS[r]}
+                        </span>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -129,7 +140,7 @@ export function RolesView() {
                           : "border-white/[0.08] bg-background/40 text-muted hover:border-white/[0.14] hover:text-foreground"
                       )}
                     >
-                      {ROLE_LABELS[role]}
+                      <RoleLabel role={role} size="xs" />
                     </button>
                   );
                 })}

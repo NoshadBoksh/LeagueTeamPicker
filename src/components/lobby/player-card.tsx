@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { RoleIcon } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { getPlayerRolePrefs } from "@/lib/role-prefs";
 import { getBestTierSummary } from "@/lib/ratings";
@@ -111,6 +112,7 @@ export function PlayerCard({
                 key={role}
                 className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-[11px] text-foreground/80"
               >
+                <RoleIcon role={role} size="xs" className="opacity-80" />
                 {ROLE_LABELS[role]}
                 {tier && (
                   <span className="font-medium text-foreground/50">{tier}</span>

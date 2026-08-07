@@ -20,6 +20,7 @@ import { toPng } from "html-to-image";
 import { Download, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { RatingKeyLabel } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { PLAYERS } from "@/data/players";
 import { useRatings } from "@/hooks/use-ratings";
@@ -178,7 +179,7 @@ export function TierListBoard() {
                 : "border-white/[0.07] bg-surface text-muted hover:border-white/[0.12] hover:text-foreground"
             )}
           >
-            {RATING_LABELS[key]}
+            <RatingKeyLabel ratingKey={key} size="sm" />
           </button>
         ))}
       </div>

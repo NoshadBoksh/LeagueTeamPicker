@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Check, Plus } from "lucide-react";
 import { PLAYERS } from "@/data/players";
 import { Button } from "@/components/ui/button";
+import { RoleLabel } from "@/components/ui/role-icon";
 import { createManualDraft } from "@/lib/draft";
 import type {
   DraftResult,
@@ -13,7 +14,7 @@ import type {
   RolePrefsOverride,
   TeamSide,
 } from "@/lib/types";
-import { ROLE_LABELS, ROLES } from "@/lib/types";
+import { ROLES } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type RoleSlots = Record<Role, string>;
@@ -258,8 +259,8 @@ function TeamPicker({
           const selected = slots[role];
           return (
             <label key={role} className="block">
-              <span className="mb-1 block text-[11px] text-muted">
-                {ROLE_LABELS[role]}
+              <span className="mb-1 flex items-center gap-1.5 text-[11px] text-muted">
+                <RoleLabel role={role} size="xs" />
               </span>
               <select
                 value={selected}

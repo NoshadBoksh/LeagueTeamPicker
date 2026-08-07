@@ -55,7 +55,6 @@ export function LobbyApp() {
           avoidPairs
         );
         setDraft(result);
-        addDraft(result);
         setView("draft");
       } catch (err) {
         setDraftError(
@@ -67,7 +66,7 @@ export function LobbyApp() {
         setGenerating(false);
       }
     });
-  }, [selected, mode, overrides, rolePrefs, avoidPairs, addDraft]);
+  }, [selected, mode, overrides, rolePrefs, avoidPairs]);
 
   const reroll = useCallback(() => {
     if (selected.length !== 10) return;
@@ -83,7 +82,6 @@ export function LobbyApp() {
         avoidPairs
       );
       setDraft(result);
-      addDraft(result);
     } catch (err) {
       setDraftError(
         err instanceof Error
@@ -93,7 +91,12 @@ export function LobbyApp() {
     } finally {
       setGenerating(false);
     }
-  }, [selected, mode, overrides, rolePrefs, avoidPairs, addDraft]);
+  }, [selected, mode, overrides, rolePrefs, avoidPairs]);
+
+  const confirmGame = useCallback(() => {
+    if (!draft) return;
+    addDraft(draft);
+  }, [draft, addDraft]);
 
   useKeyboardShortcuts({
     onEnter: () => {
@@ -122,6 +125,7 @@ export function LobbyApp() {
         draft={draft}
         onReroll={reroll}
         onBack={() => setView("lobby")}
+        onConfirmGame={confirmGame}
         isRerolling={generating}
       />
     );

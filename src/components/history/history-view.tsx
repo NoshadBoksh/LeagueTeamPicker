@@ -96,8 +96,8 @@ export function HistoryView() {
             History
           </h1>
           <p className="mt-3 text-sm text-muted">
-            Drafts save locally. Add the winner, kills, and a leaderboard
-            screenshot after each game.
+            Only confirmed games appear here. Add the winner, kills, and a
+            leaderboard screenshot after each match.
           </p>
         </div>
         {history.length > 0 && (
@@ -110,9 +110,9 @@ export function HistoryView() {
 
       {history.length === 0 ? (
         <div className="rounded-[10px] border border-dashed border-white/[0.1] bg-surface px-6 py-20 text-center">
-          <p className="text-base font-medium text-muted">No drafts yet</p>
+          <p className="text-base font-medium text-muted">No games yet</p>
           <p className="mt-2 text-sm text-muted/70">
-            Generate teams from the lobby to start building history.
+            Roll teams in the lobby, then tap Yes when it&apos;s a real game.
           </p>
         </div>
       ) : (

@@ -26,6 +26,8 @@ interface DraftRevealProps {
   draft: DraftResult;
   onReroll: () => void;
   onBack: () => void;
+  /** Save this roll to History + Stats (only after the user confirms a real game). */
+  onConfirmGame: () => void;
   isRerolling?: boolean;
 }
 
@@ -33,11 +35,14 @@ export function DraftReveal({
   draft,
   onReroll,
   onBack,
+  onConfirmGame,
   isRerolling,
 }: DraftRevealProps) {
   const [phase, setPhase] = useState<RevealPhase>("intro");
   const [revealedCount, setRevealedCount] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [recorded, setRecorded] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     registerDraftSfx(createDefaultDraftSfx());
@@ -48,6 +53,8 @@ export function DraftReveal({
     setPhase("intro");
     setRevealedCount(0);
     setCopied(false);
+    setRecorded(false);
+    setDismissed(false);
     playDraftSfx("draft-start");
 
     const t1 = setTimeout(() => setPhase("panels"), 900);
@@ -174,6 +181,50 @@ export function DraftReveal({
                   className="mt-10 space-y-8"
                 >
                   {draft.mode !== "normal" && <DraftStats draft={draft} />}
+
+                  {!recorded && !dismissed && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mx-auto max-w-md rounded-[10px] border border-white/[0.1] bg-surface-raised px-5 py-5 text-center"
+                    >
+                      <p className="text-base font-medium tracking-tight text-foreground">
+                        Was this a game?
+                      </p>
+                      <p className="mt-2 text-sm text-muted">
+                        Only tap Yes if you&apos;re playing these teams. Rolls
+                        stay off History and Stats until then.
+                      </p>
+                      <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+                        <Button
+                          onClick={() => {
+                            onConfirmGame();
+                            setRecorded(true);
+                          }}
+                        >
+                          <Check />
+                          Yes, record it
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setDismissed(true)}
+                        >
+                          No, just a roll
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {recorded && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center text-sm text-muted"
+                    >
+                      Saved to History and Stats. Add the winner on the History
+                      page when the game ends.
+                    </motion.p>
+                  )}
 
                   <div className="flex flex-wrap items-center justify-center gap-2.5">
                     <Button variant="secondary" onClick={onBack}>

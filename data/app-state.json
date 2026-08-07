@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786122494037,
+  "updatedAt": 1786122508004,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -687,5 +687,16 @@
   },
   "prizeLog": [],
   "series": [],
-  "defaultLobbyIds": []
+  "defaultLobbyIds": [
+    "aman",
+    "andre",
+    "ben",
+    "chara",
+    "gabriel",
+    "gerard",
+    "karthik",
+    "lukas",
+    "panda",
+    "noshad"
+  ]
 }

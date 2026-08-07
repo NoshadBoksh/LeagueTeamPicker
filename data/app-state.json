@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1786057545208,
+  "updatedAt": 1786108710418,
   "ratings": {
     "karthik": {
       "general": "S",
@@ -670,6 +670,21 @@
       "b": "gerard"
     }
   ],
-  "prizePoints": {},
+  "prizePoints": {
+    "andre": 0,
+    "aman": 0,
+    "ben": 0,
+    "gabriel": 1,
+    "gerard": 0,
+    "jonty": 1,
+    "joshuayeahh": 0,
+    "karthik": 0,
+    "kieran": 1,
+    "laxus": 0,
+    "lukas": 0,
+    "mark": 0,
+    "noshad": 0,
+    "panda": 0
+  },
   "prizeLog": []
 }

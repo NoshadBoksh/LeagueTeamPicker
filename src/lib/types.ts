@@ -7,7 +7,11 @@ export type RatingKey = Role | "general";
 export type Tier = "S" | "A" | "B" | "C" | "D" | "F";
 export type ActiveTier = "S" | "A" | "B" | "C";
 
-export type DraftMode = "competitive" | "role-consider" | "normal";
+export type DraftMode =
+  | "competitive"
+  | "role-consider"
+  | "normal"
+  | "manual";
 
 export type TeamSide = "blue" | "red";
 
@@ -136,6 +140,7 @@ export const MODE_LABELS: Record<DraftMode, string> = {
   competitive: "Competitive",
   "role-consider": "Role Consider",
   normal: "Normal",
+  manual: "Manual",
 };
 
 /** Tiers shown in the tier list UI (D/F removed). */

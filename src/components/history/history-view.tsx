@@ -13,6 +13,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import {
+  ManualEntryButton,
+  ManualEntryForm,
+} from "@/components/history/manual-entry-form";
 import { Button } from "@/components/ui/button";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { TierBadge } from "@/components/ui/tier-badge";
@@ -41,6 +45,7 @@ export function HistoryView() {
   const { pairs: avoidPairs } = useAvoidPairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
 
   const selected =
     history.find((d) => d.id === selectedId) ?? history[0] ?? null;
@@ -71,8 +76,9 @@ export function HistoryView() {
     const players = getPlayersByIds(draft.playerIds);
     if (players.length !== 10) return;
     try {
+      const mode = draft.mode === "manual" ? "competitive" : draft.mode;
       const next = generateDraft(
-        draft.mode,
+        mode,
         players,
         overrides,
         rolePrefs,
@@ -83,6 +89,12 @@ export function HistoryView() {
     } catch {
       // Role constraints may block a regenerate; leave history unchanged
     }
+  };
+
+  const handleManualSave = (draft: DraftResult, result?: GameResult) => {
+    addDraft(result ? { ...draft, result } : draft);
+    setSelectedId(draft.id);
+    setShowManual(false);
   };
 
   return (
@@ -96,26 +108,45 @@ export function HistoryView() {
             History
           </h1>
           <p className="mt-3 text-sm text-muted">
-            Only confirmed games appear here. Add the winner, kills, and a
+            Confirmed games and manual entries. Add the winner, kills, and a
             leaderboard screenshot after each match.
           </p>
         </div>
-        {history.length > 0 && (
-          <Button variant="destructive" size="sm" onClick={clearHistory}>
-            <Trash2 />
-            Clear
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {!showManual && (
+            <ManualEntryButton onClick={() => setShowManual(true)} />
+          )}
+          {history.length > 0 && (
+            <Button variant="destructive" size="sm" onClick={clearHistory}>
+              <Trash2 />
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
-      {history.length === 0 ? (
+      {showManual && (
+        <div className="mb-8">
+          <ManualEntryForm
+            overrides={overrides}
+            rolePrefs={rolePrefs}
+            onSave={handleManualSave}
+            onCancel={() => setShowManual(false)}
+          />
+        </div>
+      )}
+
+      {history.length === 0 && !showManual ? (
         <div className="rounded-[10px] border border-dashed border-white/[0.1] bg-surface px-6 py-20 text-center">
           <p className="text-base font-medium text-muted">No games yet</p>
           <p className="mt-2 text-sm text-muted/70">
-            Roll teams in the lobby, then tap Yes when it&apos;s a real game.
+            Roll teams in the lobby and tap Yes, or add a past game manually.
           </p>
+          <div className="mt-5 flex justify-center">
+            <ManualEntryButton onClick={() => setShowManual(true)} />
+          </div>
         </div>
-      ) : (
+      ) : history.length === 0 && showManual ? null : (
         <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr]">
           <div className="space-y-2">
             {history.map((draft, i) => (

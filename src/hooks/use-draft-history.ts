@@ -15,11 +15,14 @@ export function useDraftHistory() {
 
   const addDraft = useCallback(
     (draft: DraftResult) => {
-      updateState((prev) => ({
-        ...prev,
-        history: [draft, ...prev.history].slice(0, 100),
-        stats: applyDraftToStats(prev.stats, draft),
-      }));
+      updateState((prev) => {
+        const history = [draft, ...prev.history].slice(0, 100);
+        const stats = recomputeWinsFromHistory(
+          applyDraftToStats(prev.stats, draft),
+          history
+        );
+        return { ...prev, history, stats };
+      });
     },
     [updateState]
   );

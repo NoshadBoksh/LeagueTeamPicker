@@ -1,3 +1,4 @@
+import { getPlayersByIds } from "@/data/players";
 import {
   buildTeam,
   canPlayRole,
@@ -366,13 +367,61 @@ export function generateDraft(
   rolePrefs?: RolePrefsOverride,
   avoidPairs?: AvoidPairs
 ): DraftResult {
-  if (mode === "competitive") {
+  if (mode === "competitive" || mode === "manual") {
     return generateCompetitiveDraft(players, overrides, rolePrefs, avoidPairs);
   }
   if (mode === "role-consider") {
     return generateRoleConsiderDraft(players, overrides, rolePrefs, avoidPairs);
   }
   return generateNormalDraft(players);
+}
+
+/** Build a draft from exact role lineups (for past games / manual history). */
+export function createManualDraft(input: {
+  blue: Record<Role, string>;
+  red: Record<Role, string>;
+  overrides?: RatingsOverride;
+  rolePrefs?: RolePrefsOverride;
+  timestamp?: number;
+}): DraftResult {
+  const blueIds = ROLES.map((role) => input.blue[role]);
+  const redIds = ROLES.map((role) => input.red[role]);
+  const allIds = [...blueIds, ...redIds];
+
+  if (allIds.some((id) => !id)) {
+    throw new Error("Pick a player for every role on both teams");
+  }
+  if (new Set(allIds).size !== 10) {
+    throw new Error("Each player can only be on one team / role");
+  }
+
+  const byId = new Map(getPlayersByIds(allIds).map((p) => [p.id, p]));
+  if (byId.size !== 10) {
+    throw new Error("Unknown player in lineup");
+  }
+
+  const blue = ROLES.map((role) =>
+    toAssignedPlayer(
+      byId.get(input.blue[role])!,
+      role,
+      input.overrides,
+      input.rolePrefs
+    )
+  );
+  const red = ROLES.map((role) =>
+    toAssignedPlayer(
+      byId.get(input.red[role])!,
+      role,
+      input.overrides,
+      input.rolePrefs
+    )
+  );
+
+  const draft = finalizeDraft("manual", blue, red, allIds);
+  if (input.timestamp != null) {
+    draft.timestamp = input.timestamp;
+  }
+  return draft;
 }
 
 export function teamToRoleLines(team: Team): string[] {

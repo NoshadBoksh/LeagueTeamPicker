@@ -171,9 +171,21 @@ export async function loadAppState(): Promise<LoadedState> {
     try {
       return await loadFromGitHub();
     } catch (err) {
-      // Fall back to local file for local/dev if GitHub is unreachable.
+      // On Vercel/Netlify never fall back to empty ephemeral disk — that
+      // looks like "wiped data" and breaks saves with Bad credentials.
+      if (process.env.VERCEL || process.env.NETLIFY) {
+        throw err instanceof Error
+          ? err
+          : new Error("GitHub storage unavailable");
+      }
       console.warn("[store] GitHub load failed, using local file:", err);
     }
+  }
+
+  if (process.env.VERCEL || process.env.NETLIFY) {
+    throw new Error(
+      "GITHUB_TOKEN is missing or invalid — shared saves cannot load"
+    );
   }
 
   const state = await readLocalFile();

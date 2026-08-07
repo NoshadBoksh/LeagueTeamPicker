@@ -177,15 +177,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (!opts?.silent) setSyncStatus("loading");
       try {
         const res = await fetch("/api/state", { cache: "no-store" });
-        if (!res.ok) throw new Error(`Load failed (${res.status})`);
         const data = (await res.json()) as {
-          state: AppState;
-          sha: string | null;
+          state?: AppState;
+          sha?: string | null;
           backend?: string;
+          error?: string;
         };
+        if (!res.ok || !data.state) {
+          throw new Error(data.error || `Load failed (${res.status})`);
+        }
 
         let next = mergeAppState(emptyAppState(), data.state);
-        shaRef.current = data.sha;
+        shaRef.current = data.sha ?? null;
         if (data.backend) setBackend(data.backend);
 
         // One-time migration only — never re-upload empty/stale local data.
@@ -209,6 +212,23 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           markMigrated();
         }
 
+        // If the server returns empty but we have a richer local cache,
+        // keep the cache visible (don't blank the tier list) and keep trying.
+        const cached = readCache();
+        if (
+          isAppStateEmpty(next) &&
+          cached &&
+          !isAppStateEmpty(mergeAppState(emptyAppState(), cached))
+        ) {
+          const keep = mergeAppState(emptyAppState(), cached);
+          setState(keep);
+          stateRef.current = keep;
+          setHydrated(true);
+          readyToSave.current = true;
+          setSyncStatus("error");
+          return;
+        }
+
         setState(next);
         stateRef.current = next;
         writeCache(next);
@@ -225,8 +245,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             stateRef.current = next;
           }
           setHydrated(true);
-          // Do not enable saves while the API is down — avoids silent local-only mode.
-          readyToSave.current = false;
+          // Allow retries from edits; persist will surface Save error if API is down.
+          readyToSave.current = true;
         }
         setSyncStatus("error");
       }

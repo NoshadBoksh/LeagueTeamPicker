@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  emptyAppState,
-  normalizeAppState,
-  type AppState,
-} from "@/lib/app-state";
+import { normalizeAppState, type AppState } from "@/lib/app-state";
 import { loadAppState, saveAppState, storeMode } from "@/lib/server/store";
 
 export const dynamic = "force-dynamic";
@@ -20,14 +16,14 @@ export async function GET() {
     });
   } catch (err) {
     console.error("[api/state] GET failed:", err);
+    // Do NOT return empty state on failure — clients treat that as real data
+    // and wipe the tier list / history from the UI and local cache.
     return NextResponse.json(
       {
-        state: emptyAppState(),
-        sha: null,
-        backend: "file",
         error: err instanceof Error ? err.message : "Failed to load state",
+        mode: storeMode(),
       },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { cn } from "@/lib/utils";
@@ -13,28 +12,43 @@ const SEGMENT_COLORS = [
   "rgba(239,68,68,0.16)",
 ];
 
+/** Extra full turns on every spin so repeat spins keep momentum. */
+const SPIN_TURNS = 6;
+
+/**
+ * Absolute wheel rotation that lands `winnerIndex` under the top pointer,
+ * always spinning forward from `currentRotation` (never resets to 0).
+ */
+export function nextSpinRotation(
+  currentRotation: number,
+  winnerIndex: number,
+  segmentCount: number
+): number {
+  const n = Math.max(segmentCount, 1);
+  const slice = 360 / n;
+  const centerAngle = winnerIndex * slice + slice / 2;
+  const desiredMod = ((360 - centerAngle) % 360 + 360) % 360;
+  const currentMod = ((currentRotation % 360) + 360) % 360;
+  const delta = (desiredMod - currentMod + 360) % 360;
+  return currentRotation + 360 * SPIN_TURNS + delta;
+}
+
 export function WinnerSpinner({
   names,
   playerIds,
   spinning,
-  winnerIndex,
+  rotation,
   onSpinEnd,
 }: {
   names: string[];
   playerIds: string[];
   spinning: boolean;
-  winnerIndex: number | null;
+  /** Absolute CSS degrees; must increase on each spin (do not wrap). */
+  rotation: number;
   onSpinEnd?: () => void;
 }) {
   const n = Math.max(names.length, 1);
   const slice = 360 / n;
-
-  const targetRotation = useMemo(() => {
-    if (winnerIndex === null) return 0;
-    const centerAngle = winnerIndex * slice + slice / 2;
-    const base = 360 * 6;
-    return base + (360 - centerAngle);
-  }, [winnerIndex, slice]);
 
   if (names.length === 0) {
     return (
@@ -53,9 +67,7 @@ export function WinnerSpinner({
       <div className="relative aspect-square w-full overflow-hidden rounded-full border border-white/[0.12] bg-surface shadow-[inset_0_0_40px_rgba(0,0,0,0.45)]">
         <motion.div
           className="absolute inset-0"
-          animate={{
-            rotate: spinning || winnerIndex !== null ? targetRotation : 0,
-          }}
+          animate={{ rotate: rotation }}
           transition={
             spinning
               ? { duration: 4.2, ease: [0.12, 0.8, 0.1, 1] }

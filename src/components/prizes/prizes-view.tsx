@@ -11,6 +11,7 @@ import {
   Undo2,
 } from "lucide-react";
 import {
+  nextSpinRotation,
   SpinResultBanner,
   WinnerSpinner,
 } from "@/components/prizes/winner-spinner";
@@ -62,6 +63,8 @@ export function PrizesView({
   );
   const [spinning, setSpinning] = useState(false);
   const [winnerIndex, setWinnerIndex] = useState<number | null>(null);
+  /** Absolute wheel degrees — accumulates so each spin keeps full momentum. */
+  const [wheelRotation, setWheelRotation] = useState(0);
   const [revealedWinner, setRevealedWinner] = useState<{
     id: string;
     name: string;
@@ -157,6 +160,9 @@ export function PrizesView({
     const index = Math.floor(Math.random() * selectedPlayers.length);
     setRevealedWinner(null);
     setWinnerIndex(index);
+    setWheelRotation((prev) =>
+      nextSpinRotation(prev, index, selectedPlayers.length)
+    );
     setSpinning(true);
   };
 
@@ -274,7 +280,7 @@ export function PrizesView({
               names={selectedPlayers.map((p) => p.name)}
               playerIds={selectedPlayers.map((p) => p.id)}
               spinning={spinning}
-              winnerIndex={winnerIndex}
+              rotation={wheelRotation}
               onSpinEnd={finishSpin}
             />
 

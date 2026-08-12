@@ -24,6 +24,7 @@ import {
   copyToClipboard,
   formatNightSummary,
 } from "@/lib/discord";
+import { pickSpinWinnerIndex } from "@/lib/prize-spin";
 import {
   getSeriesSpinDraft,
   getWinningPlayers,
@@ -157,7 +158,7 @@ export function PrizesView({
 
   const startSpin = () => {
     if (!canSpin) return;
-    const index = Math.floor(Math.random() * selectedPlayers.length);
+    const index = pickSpinWinnerIndex(selectedPlayers.map((p) => p.id));
     setRevealedWinner(null);
     setWinnerIndex(index);
     setWheelRotation((prev) =>

@@ -7,6 +7,7 @@ Drop each friend’s photo here as a **PNG**.
 | Friend       | Filename           |
 | ------------ | ------------------ |
 | Chara        | `chara.png`        |
+| Chan         | `chan.png`         |
 | Karthik      | `karthik.png`      |
 | Aman         | `aman.png`         |
 | Ben          | `ben.png`          |

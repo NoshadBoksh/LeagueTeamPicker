@@ -1,4 +1,4 @@
-import { getPlayersByIds } from "@/data/players";
+import { getPlayerById, getPlayersByIds } from "@/data/players";
 import {
   buildTeam,
   canPlayRole,
@@ -18,6 +18,7 @@ import type {
   Role,
   RolePrefsOverride,
   Team,
+  TeamSide,
 } from "@/lib/types";
 import { ROLES } from "@/lib/types";
 import { shuffle, uid } from "@/lib/utils";
@@ -169,6 +170,68 @@ function finalizeDraft(
     generalRedWinChance: generalChances.red,
     playerIds: [...playerIds],
   };
+}
+
+export type DraftSeat = { side: TeamSide; role: Role };
+
+/** Rebuild MMR / odds from current seat assignments, keeping draft id. */
+export function rebuildDraft(
+  draft: DraftResult,
+  blueAssignments: AssignedPlayer[],
+  redAssignments: AssignedPlayer[]
+): DraftResult {
+  const playerIds = [...blueAssignments, ...redAssignments].map(
+    (p) => p.playerId
+  );
+  const next = finalizeDraft(draft.mode, blueAssignments, redAssignments, playerIds);
+  return {
+    ...next,
+    id: draft.id,
+    timestamp: draft.timestamp,
+    seriesId: draft.seriesId,
+    result: draft.result,
+  };
+}
+
+/**
+ * Swap two seats (same team or across Blue/Red).
+ * Players take each other's role; MMR is recomputed for the new lanes.
+ */
+export function swapDraftSeats(
+  draft: DraftResult,
+  seatA: DraftSeat,
+  seatB: DraftSeat,
+  overrides?: RatingsOverride,
+  rolePrefs?: RolePrefsOverride
+): DraftResult {
+  if (seatA.side === seatB.side && seatA.role === seatB.role) return draft;
+
+  const teamOf = (side: TeamSide) =>
+    side === "blue" ? draft.blue.players : draft.red.players;
+  const playerA = teamOf(seatA.side).find((p) => p.role === seatA.role);
+  const playerB = teamOf(seatB.side).find((p) => p.role === seatB.role);
+  if (!playerA || !playerB) return draft;
+
+  const sourceA = getPlayerById(playerA.playerId);
+  const sourceB = getPlayerById(playerB.playerId);
+  if (!sourceA || !sourceB) return draft;
+
+  // A moves into B's seat (B's role/side), B into A's.
+  const movedA = toAssignedPlayer(sourceA, seatB.role, overrides, rolePrefs);
+  const movedB = toAssignedPlayer(sourceB, seatA.role, overrides, rolePrefs);
+
+  const nextBlue = draft.blue.players.map((p) => {
+    if (seatA.side === "blue" && p.role === seatA.role) return movedB;
+    if (seatB.side === "blue" && p.role === seatB.role) return movedA;
+    return p;
+  });
+  const nextRed = draft.red.players.map((p) => {
+    if (seatA.side === "red" && p.role === seatA.role) return movedB;
+    if (seatB.side === "red" && p.role === seatB.role) return movedA;
+    return p;
+  });
+
+  return rebuildDraft(draft, nextBlue, nextRed);
 }
 
 /** Pure random roles — ignores role prefs entirely (Normal mode). */

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowLeftRight,
   Check,
   Copy,
   RefreshCw,
@@ -15,6 +16,7 @@ import {
   playDraftSfx,
   registerDraftSfx,
 } from "@/lib/audio";
+import type { DraftSeat } from "@/lib/draft";
 import { copyToClipboard, formatDraftForDiscord } from "@/lib/discord";
 import type { DraftResult } from "@/lib/types";
 import { MODE_LABELS } from "@/lib/types";
@@ -28,6 +30,8 @@ interface DraftRevealProps {
   onBack: () => void;
   /** Save this roll to History + Stats (only after the user confirms a real game). */
   onConfirmGame: () => void;
+  /** Swap two seats (same team or Blue ↔ Red) before confirming. */
+  onSwapSeats?: (seatA: DraftSeat, seatB: DraftSeat) => void;
   isRerolling?: boolean;
 }
 
@@ -36,6 +40,7 @@ export function DraftReveal({
   onReroll,
   onBack,
   onConfirmGame,
+  onSwapSeats,
   isRerolling,
 }: DraftRevealProps) {
   const [phase, setPhase] = useState<RevealPhase>("intro");
@@ -43,6 +48,7 @@ export function DraftReveal({
   const [copied, setCopied] = useState(false);
   const [recorded, setRecorded] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [selectedSeat, setSelectedSeat] = useState<DraftSeat | null>(null);
 
   useEffect(() => {
     registerDraftSfx(createDefaultDraftSfx());
@@ -55,6 +61,7 @@ export function DraftReveal({
     setCopied(false);
     setRecorded(false);
     setDismissed(false);
+    setSelectedSeat(null);
     playDraftSfx("draft-start");
 
     const t1 = setTimeout(() => setPhase("panels"), 900);
@@ -94,6 +101,28 @@ export function DraftReveal({
   };
 
   const showStats = phase === "complete";
+  const canSwap = Boolean(onSwapSeats) && showStats && !recorded;
+
+  const handleSeatClick = (seat: DraftSeat) => {
+    if (!canSwap || !onSwapSeats) return;
+
+    if (
+      selectedSeat &&
+      selectedSeat.side === seat.side &&
+      selectedSeat.role === seat.role
+    ) {
+      setSelectedSeat(null);
+      return;
+    }
+
+    if (!selectedSeat) {
+      setSelectedSeat(seat);
+      return;
+    }
+
+    onSwapSeats(selectedSeat, seat);
+    setSelectedSeat(null);
+  };
 
   return (
     <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden">
@@ -163,12 +192,18 @@ export function DraftReveal({
                 side="blue"
                 revealedCount={revealedCount}
                 showStats={showStats}
+                interactive={canSwap}
+                selectedSeat={selectedSeat}
+                onSeatClick={handleSeatClick}
               />
               <TeamPanel
                 draft={draft}
                 side="red"
                 revealedCount={revealedCount}
                 showStats={showStats}
+                interactive={canSwap}
+                selectedSeat={selectedSeat}
+                onSeatClick={handleSeatClick}
               />
             </div>
 
@@ -180,6 +215,15 @@ export function DraftReveal({
                   transition={{ delay: 0.12 }}
                   className="mt-10 space-y-8"
                 >
+                  {canSwap && (
+                    <p className="flex items-center justify-center gap-2 text-center text-sm text-muted">
+                      <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" />
+                      {selectedSeat
+                        ? "Tap another player to swap seats"
+                        : "Tap two players to move them between seats"}
+                    </p>
+                  )}
+
                   {draft.mode !== "normal" && <DraftStats draft={draft} />}
 
                   {!recorded && !dismissed && (

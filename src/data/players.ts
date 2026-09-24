@@ -17,6 +17,7 @@ function undecided(id: string, name: string): Player {
 
 export const PLAYERS: Player[] = [
   undecided("chara", "Chara"),
+  undecided("chan", "Chan"),
   undecided("karthik", "Karthik"),
   undecided("aman", "Aman"),
   undecided("ben", "Ben"),

@@ -18,6 +18,7 @@ Drop each friend’s photo here as a **PNG**.
 | Kieran       | `kieran.png`       |
 | Panda        | `panda.png`        |
 | Laxus        | `laxus.png`        |
+| Lily         | `lily.png`         |
 | Lukas        | `lukas.png`        |
 | Noshad       | `noshad.png`       |
 | Andre        | `andre.png`        |

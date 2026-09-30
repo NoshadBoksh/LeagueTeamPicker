@@ -5,11 +5,15 @@ import {
   type Role,
   type RolePrefsOverride,
 } from "@/lib/types";
+import { BOT_LANE_ROLE_PREFS } from "@/lib/bot-lane-duos";
 
 export function getPlayerRolePrefs(
   prefs: RolePrefsOverride,
   playerId: string
 ): PlayerRolePrefs {
+  const locked = BOT_LANE_ROLE_PREFS[playerId];
+  if (locked) return { fill: locked.fill, roles: [...locked.roles] };
+
   const raw = prefs[playerId];
   if (!raw || typeof raw !== "object") return { ...DEFAULT_ROLE_PREFS };
   return {

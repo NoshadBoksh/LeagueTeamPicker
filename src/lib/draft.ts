@@ -1,4 +1,5 @@
 import { getPlayersByIds } from "@/data/players";
+import { withBotLaneAvoidPairs } from "@/lib/bot-lane-duos";
 import {
   buildTeam,
   canPlayRole,
@@ -27,10 +28,11 @@ function violatesAvoidPairs(
   red: AssignedPlayer[],
   avoidPairs?: AvoidPairs
 ): boolean {
-  if (!avoidPairs?.length) return false;
+  const pairs = withBotLaneAvoidPairs(avoidPairs);
+  if (!pairs.length) return false;
   const blueIds = new Set(blue.map((p) => p.playerId));
   const redIds = new Set(red.map((p) => p.playerId));
-  for (const { a, b } of avoidPairs) {
+  for (const { a, b } of pairs) {
     if (
       (blueIds.has(a) && blueIds.has(b)) ||
       (redIds.has(a) && redIds.has(b))

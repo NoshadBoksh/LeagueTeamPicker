@@ -8,11 +8,7 @@ import { RoleIcon, RoleLabel } from "@/components/ui/role-icon";
 import { PLAYERS, getPlayerById } from "@/data/players";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
-import {
-  BOT_LANE_AVOID_PAIRS,
-  isBotLaneLocked,
-} from "@/lib/bot-lane-duos";
-import { avoidPairKey, ROLE_LABELS, ROLES, type Role } from "@/lib/types";
+import { ROLE_LABELS, ROLES, type Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function RolesView() {
@@ -36,9 +32,6 @@ export function RolesView() {
           pair,
           left: getPlayerById(pair.a),
           right: getPlayerById(pair.b),
-          locked: BOT_LANE_AVOID_PAIRS.some(
-            (p) => avoidPairKey(p) === avoidPairKey(pair)
-          ),
         }))
         .filter((row) => row.left && row.right),
     [pairs]
@@ -81,7 +74,6 @@ export function RolesView() {
       <div className="space-y-2">
         {PLAYERS.map((player) => {
           const prefs = getPrefs(player.id);
-          const locked = isBotLaneLocked(player.id);
           return (
             <div
               key={player.id}
@@ -98,9 +90,7 @@ export function RolesView() {
                     {player.name}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                    {locked ? (
-                      <span>Bot lane duo — ADC / Support only</span>
-                    ) : prefs.fill ? (
+                    {prefs.fill ? (
                       "FILL — any role"
                     ) : prefs.roles.length === 0 ? (
                       "No roles selected"
@@ -122,14 +112,12 @@ export function RolesView() {
               <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
-                  disabled={locked}
                   onClick={() => setFill(player.id, !prefs.fill)}
                   className={cn(
                     "rounded-md border px-2.5 py-1.5 text-[11px] font-medium tracking-wide transition-colors",
                     prefs.fill
                       ? "border-white/25 bg-white/[0.1] text-foreground"
-                      : "border-white/[0.08] bg-background/40 text-muted hover:border-white/[0.14] hover:text-foreground",
-                    locked && "cursor-not-allowed opacity-50"
+                      : "border-white/[0.08] bg-background/40 text-muted hover:border-white/[0.14] hover:text-foreground"
                   )}
                 >
                   FILL
@@ -143,15 +131,13 @@ export function RolesView() {
                     <button
                       key={role}
                       type="button"
-                      disabled={locked}
                       onClick={() => toggleRole(player.id, role)}
                       className={cn(
                         "rounded-md border px-2.5 py-1.5 text-[11px] font-medium transition-colors",
                         prefs.fill && "opacity-40",
                         active
                           ? "border-white/25 bg-white/[0.1] text-foreground"
-                          : "border-white/[0.08] bg-background/40 text-muted hover:border-white/[0.14] hover:text-foreground",
-                        locked && "cursor-not-allowed opacity-50"
+                          : "border-white/[0.08] bg-background/40 text-muted hover:border-white/[0.14] hover:text-foreground"
                       )}
                     >
                       <RoleLabel role={role} size="xs" />
@@ -234,7 +220,7 @@ export function RolesView() {
           </div>
         ) : (
           <div className="space-y-2">
-            {pairRows.map(({ pair, left, right, locked }) => (
+            {pairRows.map(({ pair, left, right }) => (
               <div
                 key={`${pair.a}-${pair.b}`}
                 className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.07] bg-surface px-4 py-3"
@@ -257,22 +243,15 @@ export function RolesView() {
                     />
                     <span className="text-sm font-medium">{right!.name}</span>
                   </div>
-                  {locked && (
-                    <span className="text-[10px] uppercase tracking-wider text-muted">
-                      Bot lane
-                    </span>
-                  )}
                 </div>
-                {!locked && (
-                  <button
-                    type="button"
-                    onClick={() => removePair(pair)}
-                    className="rounded-md border border-white/[0.08] p-1.5 text-muted transition-colors hover:border-white/15 hover:text-foreground"
-                    aria-label="Remove pair"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => removePair(pair)}
+                  className="rounded-md border border-white/[0.08] p-1.5 text-muted transition-colors hover:border-white/15 hover:text-foreground"
+                  aria-label="Remove pair"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
             ))}
           </div>

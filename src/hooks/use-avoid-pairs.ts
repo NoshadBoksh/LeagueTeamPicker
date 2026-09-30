@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useAppState } from "@/components/providers/app-state-provider";
-import { withBotLaneAvoidPairs } from "@/lib/bot-lane-duos";
 import {
   avoidPairKey,
   makeAvoidPair,
@@ -12,10 +11,7 @@ import {
 
 export function useAvoidPairs() {
   const { state, updateState, hydrated } = useAppState();
-  const pairs = useMemo(
-    () => withBotLaneAvoidPairs(state.avoidPairs),
-    [state.avoidPairs]
-  );
+  const pairs = state.avoidPairs;
 
   const hasPair = useCallback(
     (id1: string, id2: string) => {

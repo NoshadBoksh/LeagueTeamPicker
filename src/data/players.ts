@@ -28,6 +28,7 @@ export const PLAYERS: Player[] = [
   undecided("kieran", "Kieran"),
   undecided("panda", "Panda"),
   undecided("laxus", "Laxus"),
+  undecided("lily", "Lily"),
   undecided("lukas", "Lukas"),
   undecided("noshad", "Noshad"),
   undecided("andre", "Andre"),

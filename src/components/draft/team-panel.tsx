@@ -5,6 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { RoleIcon } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
+import type { DraftSeat } from "@/lib/draft";
 import {
   ROLE_LABELS,
   type AssignedPlayer,
@@ -20,6 +21,10 @@ interface TeamPanelProps {
   side: TeamSide;
   revealedCount: number;
   showStats: boolean;
+  /** Allow tapping seats to swap players after the reveal. */
+  interactive?: boolean;
+  selectedSeat?: DraftSeat | null;
+  onSeatClick?: (seat: DraftSeat) => void;
 }
 
 export function TeamPanel({
@@ -27,6 +32,9 @@ export function TeamPanel({
   side,
   revealedCount,
   showStats,
+  interactive = false,
+  selectedSeat = null,
+  onSeatClick,
 }: TeamPanelProps) {
   const team = side === "blue" ? draft.blue : draft.red;
   const isBlue = side === "blue";
@@ -82,6 +90,9 @@ export function TeamPanel({
         {ROLE_ORDER.map((role, index) => {
           const player = team.players.find((p) => p.role === role)!;
           const revealed = index < revealedCount;
+          const seat: DraftSeat = { side, role };
+          const selected =
+            selectedSeat?.side === side && selectedSeat.role === role;
           return (
             <RoleSlot
               key={role}
@@ -90,6 +101,13 @@ export function TeamPanel({
               side={side}
               delay={index * 0.05}
               plain={plain}
+              interactive={interactive && revealed}
+              selected={selected}
+              onClick={
+                interactive && revealed && onSeatClick
+                  ? () => onSeatClick(seat)
+                  : undefined
+              }
             />
           );
         })}
@@ -104,17 +122,34 @@ function RoleSlot({
   side,
   delay,
   plain,
+  interactive,
+  selected,
+  onClick,
 }: {
   player: AssignedPlayer;
   revealed: boolean;
   side: TeamSide;
   delay: number;
   plain: boolean;
+  interactive?: boolean;
+  selected?: boolean;
+  onClick?: () => void;
 }) {
   const isBlue = side === "blue";
+  const shellClass = cn(
+    "relative min-h-[68px] w-full overflow-hidden rounded-[8px] border bg-background/50 text-left transition-colors",
+    selected
+      ? isBlue
+        ? "border-blue-glow/60 bg-blue-glow/10"
+        : "border-red-glow/60 bg-red-glow/10"
+      : "border-white/[0.05]",
+    interactive &&
+      onClick &&
+      "cursor-pointer hover:border-white/20 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+  );
 
-  return (
-    <div className="relative min-h-[68px] overflow-hidden rounded-[8px] border border-white/[0.05] bg-background/50">
+  const body = (
+    <>
       <div className="absolute left-3.5 top-2.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
         <RoleIcon role={player.role} size="xs" className="opacity-80" />
         {ROLE_LABELS[player.role]}
@@ -184,6 +219,16 @@ function RoleSlot({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
+
+  if (interactive && onClick) {
+    return (
+      <button type="button" onClick={onClick} className={shellClass}>
+        {body}
+      </button>
+    );
+  }
+
+  return <div className={shellClass}>{body}</div>;
 }

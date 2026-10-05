@@ -14,7 +14,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useRatings } from "@/hooks/use-ratings";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
-import { generateDraft } from "@/lib/draft";
+import { generateDraft, swapDraftSeats, type DraftSeat } from "@/lib/draft";
 import { cloneDraftAsRematch } from "@/lib/series";
 import type { DraftMode, DraftResult } from "@/lib/types";
 
@@ -159,6 +159,16 @@ export function LobbyApp() {
     addDraft(draft);
   }, [draft, addDraft]);
 
+  const swapSeats = useCallback(
+    (seatA: DraftSeat, seatB: DraftSeat) => {
+      setDraft((current) => {
+        if (!current) return current;
+        return swapDraftSeats(current, seatA, seatB, overrides, rolePrefs);
+      });
+    },
+    [overrides, rolePrefs]
+  );
+
   useKeyboardShortcuts({
     onEnter: () => {
       if (view === "lobby" && canGenerate) runDraft();
@@ -187,6 +197,7 @@ export function LobbyApp() {
         onReroll={reroll}
         onBack={() => setView("lobby")}
         onConfirmGame={confirmGame}
+        onSwapSeats={swapSeats}
         isRerolling={generating}
       />
     );

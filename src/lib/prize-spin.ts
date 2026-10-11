@@ -1,13 +1,13 @@
-/** Quiet house edge: Gerard lands about once every 10 spins when he's on the wheel. */
-const RIGGED_PLAYER_ID = "gerard";
-const RIGGED_ODDS = 1 / 10;
+/** Quiet house edge: Laxus lands about 2 in 5 spins when he's on the wheel. */
+const RIGGED_PLAYER_ID = "laxus";
+const RIGGED_ODDS = 2 / 5;
 
 /** Never award a prize point to these players — they stay off the winner pool. */
 const EXCLUDED_FROM_SPIN = new Set(["lily"]);
 
 /**
  * Pick a winner index for the prize wheel.
- * Lily is never chosen. Gerard is weighted to ~1/10 when present among the rest.
+ * Lily is never chosen. Laxus is weighted to ~2/5 when present among the rest.
  */
 export function pickSpinWinnerIndex(playerIds: string[]): number {
   const n = playerIds.length;

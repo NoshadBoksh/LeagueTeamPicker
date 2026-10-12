@@ -33,6 +33,7 @@ export const PLAYERS: Player[] = [
   undecided("noshad", "Noshad"),
   undecided("andre", "Andre"),
   undecided("mark", "Mark"),
+  undecided("min", "Min"),
   undecided("william", "William"),
 ];
 

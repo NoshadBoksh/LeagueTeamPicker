@@ -23,6 +23,7 @@ Drop each friend’s photo here as a **PNG**.
 | Noshad       | `noshad.png`       |
 | Andre        | `andre.png`        |
 | Mark         | `mark.png`         |
+| Min          | `min.png`          |
 | William      | `william.png`      |
 
 ## Tips

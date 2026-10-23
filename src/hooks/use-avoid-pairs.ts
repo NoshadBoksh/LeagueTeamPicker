@@ -5,6 +5,8 @@ import { useAppState } from "@/components/providers/app-state-provider";
 import {
   avoidPairKey,
   makeAvoidPair,
+  makeTogetherPair,
+  togetherPairKey,
   type AvoidPair,
   type AvoidPairs,
 } from "@/lib/types";
@@ -30,6 +32,16 @@ export function useAvoidPairs() {
       updateState((prev) => {
         const key = avoidPairKey(pair);
         if (prev.avoidPairs.some((p) => avoidPairKey(p) === key)) return prev;
+        // Can't be both keep-apart and keep-together
+        const together = makeTogetherPair(id1, id2);
+        if (
+          together &&
+          prev.togetherPairs.some(
+            (p) => togetherPairKey(p) === togetherPairKey(together)
+          )
+        ) {
+          return prev;
+        }
         const avoidPairs: AvoidPairs = [...prev.avoidPairs, pair];
         return { ...prev, avoidPairs };
       });

@@ -26,6 +26,7 @@ import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { RoleIcon } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
+import { useTogetherPairs } from "@/hooks/use-together-pairs";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { usePrizePoints } from "@/hooks/use-prize-points";
 import { useRatings } from "@/hooks/use-ratings";
@@ -73,6 +74,7 @@ export function HistoryView() {
   const { overrides } = useRatings();
   const { prefs: rolePrefs } = useRolePrefs();
   const { pairs: avoidPairs } = useAvoidPairs();
+  const { pairs: togetherPairs } = useTogetherPairs();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
@@ -128,7 +130,8 @@ export function HistoryView() {
         players,
         overrides,
         rolePrefs,
-        avoidPairs
+        avoidPairs,
+        togetherPairs
       );
       addDraft(next);
       setSelectedId(next.id);

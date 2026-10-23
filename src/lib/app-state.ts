@@ -7,6 +7,7 @@ import type {
   RolePrefsOverride,
   PlayerStats,
   Series,
+  TogetherPairs,
 } from "@/lib/types";
 
 export const APP_STATE_VERSION = 1;
@@ -20,6 +21,8 @@ export interface AppState {
   stats: Record<string, PlayerStats>;
   rolePrefs: RolePrefsOverride;
   avoidPairs: AvoidPairs;
+  /** Pairs that must share a team. */
+  togetherPairs: TogetherPairs;
   prizePoints: PrizePoints;
   prizeLog: PrizeLogEntry[];
   /** Best-of-3 (or shorter) series for a customs night. */
@@ -37,6 +40,7 @@ export function emptyAppState(): AppState {
     stats: {},
     rolePrefs: {},
     avoidPairs: [],
+    togetherPairs: [],
     prizePoints: {},
     prizeLog: [],
     series: [],
@@ -51,6 +55,7 @@ export function isAppStateEmpty(state: AppState): boolean {
     Object.keys(state.stats).length === 0 &&
     Object.keys(state.rolePrefs).length === 0 &&
     state.avoidPairs.length === 0 &&
+    state.togetherPairs.length === 0 &&
     Object.keys(state.prizePoints).length === 0 &&
     state.prizeLog.length === 0 &&
     state.series.length === 0 &&
@@ -141,6 +146,7 @@ export function mergeAppState(
     stats: patch.stats ?? base.stats,
     rolePrefs: patch.rolePrefs ?? base.rolePrefs,
     avoidPairs: patch.avoidPairs ?? base.avoidPairs,
+    togetherPairs: patch.togetherPairs ?? base.togetherPairs,
     prizePoints: patch.prizePoints ?? base.prizePoints,
     prizeLog: patch.prizeLog ?? base.prizeLog,
     series: patch.series ?? base.series,
@@ -190,6 +196,9 @@ export function normalizeAppState(raw: unknown): AppState {
         : {},
     avoidPairs: Array.isArray(o.avoidPairs)
       ? (o.avoidPairs as AvoidPairs)
+      : [],
+    togetherPairs: Array.isArray(o.togetherPairs)
+      ? (o.togetherPairs as TogetherPairs)
       : [],
     prizePoints:
       o.prizePoints && typeof o.prizePoints === "object"

@@ -196,6 +196,26 @@ export function avoidPairKey(pair: AvoidPair): string {
   return `${pair.a}|${pair.b}`;
 }
 
+/** Sorted pair of player ids that should share a team. */
+export interface TogetherPair {
+  a: string;
+  b: string;
+}
+
+export type TogetherPairs = TogetherPair[];
+
+export function makeTogetherPair(
+  id1: string,
+  id2: string
+): TogetherPair | null {
+  if (id1 === id2) return null;
+  return id1 < id2 ? { a: id1, b: id2 } : { a: id2, b: id1 };
+}
+
+export function togetherPairKey(pair: TogetherPair): string {
+  return `${pair.a}|${pair.b}`;
+}
+
 /** Points needed to cash in for a mystery prize. */
 export const MYSTERY_PRIZE_COST = 3;
 

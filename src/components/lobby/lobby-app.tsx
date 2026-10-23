@@ -12,6 +12,7 @@ import { PLAYERS, getPlayersByIds } from "@/data/players";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
+import { useTogetherPairs } from "@/hooks/use-together-pairs";
 import { useRatings } from "@/hooks/use-ratings";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
 import { generateDraft } from "@/lib/draft";
@@ -32,6 +33,7 @@ export function LobbyApp() {
   const { overrides } = useRatings();
   const { prefs: rolePrefs } = useRolePrefs();
   const { pairs: avoidPairs } = useAvoidPairs();
+  const { pairs: togetherPairs } = useTogetherPairs();
   const {
     addDraft,
     history,
@@ -113,7 +115,8 @@ export function LobbyApp() {
           players,
           overrides,
           rolePrefs,
-          avoidPairs
+          avoidPairs,
+          togetherPairs
         );
         setDraft(result);
         setView("draft");
@@ -127,7 +130,7 @@ export function LobbyApp() {
         setGenerating(false);
       }
     });
-  }, [selected, mode, overrides, rolePrefs, avoidPairs]);
+  }, [selected, mode, overrides, rolePrefs, avoidPairs, togetherPairs]);
 
   const reroll = useCallback(() => {
     if (selected.length !== 10) return;
@@ -140,7 +143,8 @@ export function LobbyApp() {
         players,
         overrides,
         rolePrefs,
-        avoidPairs
+        avoidPairs,
+        togetherPairs
       );
       setDraft(result);
     } catch (err) {
@@ -152,7 +156,7 @@ export function LobbyApp() {
     } finally {
       setGenerating(false);
     }
-  }, [selected, mode, overrides, rolePrefs, avoidPairs]);
+  }, [selected, mode, overrides, rolePrefs, avoidPairs, togetherPairs]);
 
   const confirmGame = useCallback(() => {
     if (!draft) return;

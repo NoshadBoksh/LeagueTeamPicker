@@ -15,7 +15,7 @@ Esports-grade 5v5 team generation with role-aware balancing, random modes, and a
 - **History** (`/history`) : Saved drafts with copy + regenerate
 - **Stats** (`/stats`) : Per-player analytics from draft history
 - **Discord Copy** : Formatted team paste for Discord
-- **Shared save** : Tier list, history, roles, avoid-pairs, and prizes sync via `/api/state` (GitHub-backed when `GITHUB_TOKEN` is set)
+- **Shared save** : Tier list, history, roles, avoid/together pairs, and prizes sync via `/api/state` (GitHub-backed when `GITHUB_TOKEN` is set)
 
 ## Tech Stack
 

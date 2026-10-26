@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useAppState } from "@/components/providers/app-state-provider";
+import { isBuiltInTogetherPair } from "@/lib/built-in-together";
 import {
   avoidPairKey,
   makeAvoidPair,
@@ -29,6 +30,8 @@ export function useAvoidPairs() {
     (id1: string, id2: string) => {
       const pair = makeAvoidPair(id1, id2);
       if (!pair) return;
+      // Built-in keep-together pairs can't be keep-apart
+      if (isBuiltInTogetherPair(id1, id2)) return;
       updateState((prev) => {
         const key = avoidPairKey(pair);
         if (prev.avoidPairs.some((p) => avoidPairKey(p) === key)) return prev;

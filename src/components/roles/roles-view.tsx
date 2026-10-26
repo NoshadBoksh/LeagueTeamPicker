@@ -9,6 +9,7 @@ import { PLAYERS, getPlayerById } from "@/data/players";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
 import { useTogetherPairs } from "@/hooks/use-together-pairs";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
+import { BUILT_IN_TOGETHER_PAIRS } from "@/lib/built-in-together";
 import { ROLE_LABELS, ROLES, type Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -48,16 +49,28 @@ export function RolesView() {
     [pairs]
   );
 
-  const togetherRows = useMemo(
+  const togetherRows = useMemo(() => {
+    const builtInKeys = new Set(
+      BUILT_IN_TOGETHER_PAIRS.map((p) => `${p.a}|${p.b}`)
+    );
+    return togetherPairs
+      .filter((pair) => !builtInKeys.has(`${pair.a}|${pair.b}`))
+      .map((pair) => ({
+        pair,
+        left: getPlayerById(pair.a),
+        right: getPlayerById(pair.b),
+      }))
+      .filter((row) => row.left && row.right);
+  }, [togetherPairs]);
+
+  const builtInTogetherRows = useMemo(
     () =>
-      togetherPairs
-        .map((pair) => ({
-          pair,
-          left: getPlayerById(pair.a),
-          right: getPlayerById(pair.b),
-        }))
-        .filter((row) => row.left && row.right),
-    [togetherPairs]
+      BUILT_IN_TOGETHER_PAIRS.map((pair) => ({
+        pair,
+        left: getPlayerById(pair.a),
+        right: getPlayerById(pair.b),
+      })).filter((row) => row.left && row.right),
+    []
   );
 
   if (!hydrated || !avoidHydrated || !togetherHydrated) {
@@ -298,7 +311,8 @@ export function RolesView() {
             <p className="mt-2 max-w-xl text-sm text-muted">
               Mark pairs that{" "}
               <span className="text-foreground/80">must</span> be on the same
-              team. Competitive and Role Consider will keep them together.
+              team. Locked pairs always apply; extra pairs apply in all draft
+              modes.
             </p>
           </div>
           {togetherPairs.length > 0 && (
@@ -351,48 +365,71 @@ export function RolesView() {
           </Button>
         </div>
 
-        {togetherRows.length === 0 ? (
-          <div className="rounded-[10px] border border-dashed border-white/[0.1] px-4 py-10 text-center text-sm text-muted">
-            No keep-together pairs yet.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {togetherRows.map(({ pair, left, right }) => (
-              <div
-                key={`together-${pair.a}-${pair.b}`}
-                className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.07] bg-surface px-4 py-3"
-              >
-                <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-                  <div className="flex items-center gap-2">
-                    <PlayerAvatar
-                      name={left!.name}
-                      playerId={left!.id}
-                      size="sm"
-                    />
-                    <span className="text-sm font-medium">{left!.name}</span>
-                  </div>
-                  <span className="text-xs text-muted">=</span>
-                  <div className="flex items-center gap-2">
-                    <PlayerAvatar
-                      name={right!.name}
-                      playerId={right!.id}
-                      size="sm"
-                    />
-                    <span className="text-sm font-medium">{right!.name}</span>
-                  </div>
+        <div className="space-y-2">
+          {builtInTogetherRows.map(({ pair, left, right }) => (
+            <div
+              key={`built-in-${pair.a}-${pair.b}`}
+              className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.07] bg-surface px-4 py-3"
+            >
+              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2">
+                  <PlayerAvatar
+                    name={left!.name}
+                    playerId={left!.id}
+                    size="sm"
+                  />
+                  <span className="text-sm font-medium">{left!.name}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeTogetherPair(pair)}
-                  className="rounded-md border border-white/[0.08] p-1.5 text-muted transition-colors hover:border-white/15 hover:text-foreground"
-                  aria-label="Remove pair"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <span className="text-xs text-muted">=</span>
+                <div className="flex items-center gap-2">
+                  <PlayerAvatar
+                    name={right!.name}
+                    playerId={right!.id}
+                    size="sm"
+                  />
+                  <span className="text-sm font-medium">{right!.name}</span>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
+              <span className="shrink-0 text-[11px] uppercase tracking-wide text-muted">
+                Always
+              </span>
+            </div>
+          ))}
+          {togetherRows.map(({ pair, left, right }) => (
+            <div
+              key={`together-${pair.a}-${pair.b}`}
+              className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.07] bg-surface px-4 py-3"
+            >
+              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2">
+                  <PlayerAvatar
+                    name={left!.name}
+                    playerId={left!.id}
+                    size="sm"
+                  />
+                  <span className="text-sm font-medium">{left!.name}</span>
+                </div>
+                <span className="text-xs text-muted">=</span>
+                <div className="flex items-center gap-2">
+                  <PlayerAvatar
+                    name={right!.name}
+                    playerId={right!.id}
+                    size="sm"
+                  />
+                  <span className="text-sm font-medium">{right!.name}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeTogetherPair(pair)}
+                className="rounded-md border border-white/[0.08] p-1.5 text-muted transition-colors hover:border-white/15 hover:text-foreground"
+                aria-label="Remove pair"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,6 @@
 
 import { useCallback } from "react";
 import { useAppState } from "@/components/providers/app-state-provider";
-import { isBuiltInTogetherPair } from "@/lib/built-in-together";
 import {
   avoidPairKey,
   makeAvoidPair,
@@ -18,7 +17,6 @@ export function useTogetherPairs() {
 
   const hasPair = useCallback(
     (id1: string, id2: string) => {
-      if (isBuiltInTogetherPair(id1, id2)) return true;
       const pair = makeTogetherPair(id1, id2);
       if (!pair) return false;
       const key = togetherPairKey(pair);
@@ -31,8 +29,6 @@ export function useTogetherPairs() {
     (id1: string, id2: string) => {
       const pair = makeTogetherPair(id1, id2);
       if (!pair) return;
-      // Already locked in code — no need to store a duplicate
-      if (isBuiltInTogetherPair(id1, id2)) return;
       updateState((prev) => {
         const key = togetherPairKey(pair);
         if (prev.togetherPairs.some((p) => togetherPairKey(p) === key)) {

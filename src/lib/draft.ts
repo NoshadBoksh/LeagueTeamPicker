@@ -3,7 +3,10 @@ import {
   isBotMatchupLobby,
   isBotMatchupPlayer,
 } from "@/lib/bot-lane-duos";
-import { mergeTogetherPairs } from "@/lib/built-in-together";
+import {
+  mergeTogetherPairs,
+  shouldPinAmanWithGabriel,
+} from "@/lib/built-in-together";
 import {
   buildTeam,
   canPlayRole,
@@ -341,7 +344,7 @@ function fixedRolesForDuo(
 /**
  * When Gerard, Lily, Karthik, and Gabriel are all in the 10:
  * Gerard+Lily bot (ADC/Support) vs Karthik+Gabriel bot (ADC/Support).
- * Aman is pinned to Gabriel’s side when he’s in the lobby (built-in duo).
+ * Aman is pinned to Gabriel’s side when the secret lock is active.
  */
 function tryGenerateBotMatchupDraft(
   mode: DraftMode,
@@ -358,7 +361,9 @@ function tryGenerateBotMatchupDraft(
   if (rest.length !== 6) return null;
 
   const aman = byId.get("aman");
-  const amanInLobby = Boolean(aman && rest.some((p) => p.id === "aman"));
+  const pinAman =
+    Boolean(aman && rest.some((p) => p.id === "aman")) &&
+    shouldPinAmanWithGabriel(togetherPairs);
 
   const attempts = mode === "competitive" ? 600 : 300;
   let bestScore = Infinity;
@@ -371,7 +376,7 @@ function tryGenerateBotMatchupDraft(
     let withGerardLily: Player[];
     let withKarthikGabriel: Player[];
 
-    if (amanInLobby && aman) {
+    if (pinAman && aman) {
       // Gabriel side: Karthik + Gabriel + Aman + 2 flex; other: Gerard + Lily + 3
       const flex = shuffle(rest.filter((p) => p.id !== "aman"));
       withKarthikGabriel = [aman, ...flex.slice(0, 2)];
@@ -666,9 +671,11 @@ export function generateDraft(
   overrides?: RatingsOverride,
   rolePrefs?: RolePrefsOverride,
   avoidPairs?: AvoidPairs,
-  togetherPairs?: TogetherPairs
+  togetherPairs?: TogetherPairs,
+  /** Secret Gabriel↔Aman lock; default on when omitted. */
+  secretGaLock = true
 ): DraftResult {
-  const mergedTogether = mergeTogetherPairs(togetherPairs);
+  const mergedTogether = mergeTogetherPairs(togetherPairs, secretGaLock);
   if (mode === "competitive" || mode === "manual") {
     return generateCompetitiveDraft(
       players,

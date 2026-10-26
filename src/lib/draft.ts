@@ -4,6 +4,10 @@ import {
   isBotMatchupPlayer,
 } from "@/lib/bot-lane-duos";
 import {
+  mergeTogetherPairs,
+  shouldPinAmanWithGabriel,
+} from "@/lib/built-in-together";
+import {
   buildTeam,
   canPlayRole,
   computeBalanceScore,
@@ -340,6 +344,7 @@ function fixedRolesForDuo(
 /**
  * When Gerard, Lily, Karthik, and Gabriel are all in the 10:
  * Gerard+Lily bot (ADC/Support) vs Karthik+Gabriel bot (ADC/Support).
+ * Aman is pinned to Gabriel’s side when the secret lock is active.
  */
 function tryGenerateBotMatchupDraft(
   mode: DraftMode,
@@ -355,23 +360,39 @@ function tryGenerateBotMatchupDraft(
   const rest = players.filter((p) => !isBotMatchupPlayer(p.id));
   if (rest.length !== 6) return null;
 
+  const aman = byId.get("aman");
+  const pinAman =
+    Boolean(aman && rest.some((p) => p.id === "aman")) &&
+    shouldPinAmanWithGabriel(togetherPairs);
+
   const attempts = mode === "competitive" ? 600 : 300;
   let bestScore = Infinity;
   let bestBlue: AssignedPlayer[] | null = null;
   let bestRed: AssignedPlayer[] | null = null;
 
   for (let i = 0; i < attempts; i++) {
-    const shuffled = shuffle(rest);
-    const left3 = shuffled.slice(0, 3);
-    const right3 = shuffled.slice(3);
     const glIsBlue = Math.random() < 0.5;
 
+    let withGerardLily: Player[];
+    let withKarthikGabriel: Player[];
+
+    if (pinAman && aman) {
+      // Gabriel side: Karthik + Gabriel + Aman + 2 flex; other: Gerard + Lily + 3
+      const flex = shuffle(rest.filter((p) => p.id !== "aman"));
+      withKarthikGabriel = [aman, ...flex.slice(0, 2)];
+      withGerardLily = flex.slice(2);
+    } else {
+      const shuffled = shuffle(rest);
+      withGerardLily = shuffled.slice(0, 3);
+      withKarthikGabriel = shuffled.slice(3);
+    }
+
     const bluePlayers = glIsBlue
-      ? [byId.get("gerard")!, byId.get("lily")!, ...left3]
-      : [byId.get("karthik")!, byId.get("gabriel")!, ...left3];
+      ? [byId.get("gerard")!, byId.get("lily")!, ...withGerardLily]
+      : [byId.get("karthik")!, byId.get("gabriel")!, ...withKarthikGabriel];
     const redPlayers = glIsBlue
-      ? [byId.get("karthik")!, byId.get("gabriel")!, ...right3]
-      : [byId.get("gerard")!, byId.get("lily")!, ...right3];
+      ? [byId.get("karthik")!, byId.get("gabriel")!, ...withKarthikGabriel]
+      : [byId.get("gerard")!, byId.get("lily")!, ...withGerardLily];
 
     const blueFixed = fixedRolesForDuo(glIsBlue);
     const redFixed = fixedRolesForDuo(!glIsBlue);
@@ -629,11 +650,19 @@ export function generateNormalDraft(
   );
   if (forced) return forced;
 
-  const shuffled = shuffle(players);
-  const blue = assignRolesBlind(shuffled.slice(0, 5));
-  const red = assignRolesBlind(shuffled.slice(5));
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const shuffled = shuffle(players);
+    const blue = assignRolesBlind(shuffled.slice(0, 5));
+    const red = assignRolesBlind(shuffled.slice(5));
+    if (violatesTeamConstraints(blue, red, avoidPairs, togetherPairs)) {
+      continue;
+    }
+    return finalizeDraft("normal", blue, red, players.map((p) => p.id));
+  }
 
-  return finalizeDraft("normal", blue, red, players.map((p) => p.id));
+  throw new Error(
+    "Could not build teams with current team constraints. Loosen keep-apart or keep-together pairs."
+  );
 }
 
 export function generateDraft(
@@ -642,15 +671,18 @@ export function generateDraft(
   overrides?: RatingsOverride,
   rolePrefs?: RolePrefsOverride,
   avoidPairs?: AvoidPairs,
-  togetherPairs?: TogetherPairs
+  togetherPairs?: TogetherPairs,
+  /** Secret Gabriel↔Aman lock; default on when omitted. */
+  secretGaLock = true
 ): DraftResult {
+  const mergedTogether = mergeTogetherPairs(togetherPairs, secretGaLock);
   if (mode === "competitive" || mode === "manual") {
     return generateCompetitiveDraft(
       players,
       overrides,
       rolePrefs,
       avoidPairs,
-      togetherPairs
+      mergedTogether
     );
   }
   if (mode === "role-consider") {
@@ -659,7 +691,7 @@ export function generateDraft(
       overrides,
       rolePrefs,
       avoidPairs,
-      togetherPairs
+      mergedTogether
     );
   }
   return generateNormalDraft(
@@ -667,7 +699,7 @@ export function generateDraft(
     overrides,
     rolePrefs,
     avoidPairs,
-    togetherPairs
+    mergedTogether
   );
 }
 

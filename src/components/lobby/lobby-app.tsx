@@ -12,10 +12,12 @@ import { PLAYERS, getPlayersByIds } from "@/data/players";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
+import { useSecretGaLock } from "@/hooks/use-secret-ga-lock";
 import { useTogetherPairs } from "@/hooks/use-together-pairs";
 import { useRatings } from "@/hooks/use-ratings";
 import { useRolePrefs } from "@/hooks/use-role-prefs";
 import { generateDraft } from "@/lib/draft";
+import { SECRET_GA_LOCK_PLAYER_ID } from "@/lib/built-in-together";
 import { cloneDraftAsRematch } from "@/lib/series";
 import type { DraftMode, DraftResult } from "@/lib/types";
 
@@ -34,6 +36,8 @@ export function LobbyApp() {
   const { prefs: rolePrefs } = useRolePrefs();
   const { pairs: avoidPairs } = useAvoidPairs();
   const { pairs: togetherPairs } = useTogetherPairs();
+  const { enabled: secretGaLock, toggle: toggleSecretGaLock } =
+    useSecretGaLock();
   const {
     addDraft,
     history,
@@ -116,7 +120,8 @@ export function LobbyApp() {
           overrides,
           rolePrefs,
           avoidPairs,
-          togetherPairs
+          togetherPairs,
+          secretGaLock
         );
         setDraft(result);
         setView("draft");
@@ -130,7 +135,15 @@ export function LobbyApp() {
         setGenerating(false);
       }
     });
-  }, [selected, mode, overrides, rolePrefs, avoidPairs, togetherPairs]);
+  }, [
+    selected,
+    mode,
+    overrides,
+    rolePrefs,
+    avoidPairs,
+    togetherPairs,
+    secretGaLock,
+  ]);
 
   const reroll = useCallback(() => {
     if (selected.length !== 10) return;
@@ -144,7 +157,8 @@ export function LobbyApp() {
         overrides,
         rolePrefs,
         avoidPairs,
-        togetherPairs
+        togetherPairs,
+        secretGaLock
       );
       setDraft(result);
     } catch (err) {
@@ -156,7 +170,15 @@ export function LobbyApp() {
     } finally {
       setGenerating(false);
     }
-  }, [selected, mode, overrides, rolePrefs, avoidPairs, togetherPairs]);
+  }, [
+    selected,
+    mode,
+    overrides,
+    rolePrefs,
+    avoidPairs,
+    togetherPairs,
+    secretGaLock,
+  ]);
 
   const confirmGame = useCallback(() => {
     if (!draft) return;
@@ -314,6 +336,11 @@ export function LobbyApp() {
                 overrides={overrides}
                 rolePrefs={rolePrefs}
                 disabled={!isSelected && selected.length >= 10}
+                onSecretDoubleTap={
+                  player.id === SECRET_GA_LOCK_PLAYER_ID
+                    ? toggleSecretGaLock
+                    : undefined
+                }
               />
             );
           })}

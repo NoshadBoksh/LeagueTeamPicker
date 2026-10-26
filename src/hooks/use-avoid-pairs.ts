@@ -3,6 +3,10 @@
 import { useCallback } from "react";
 import { useAppState } from "@/components/providers/app-state-provider";
 import {
+  isBuiltInTogetherPair,
+  readSecretGaLock,
+} from "@/lib/built-in-together";
+import {
   avoidPairKey,
   makeAvoidPair,
   makeTogetherPair,
@@ -29,6 +33,8 @@ export function useAvoidPairs() {
     (id1: string, id2: string) => {
       const pair = makeAvoidPair(id1, id2);
       if (!pair) return;
+      // Quietly block keep-apart while the secret lock is on
+      if (isBuiltInTogetherPair(id1, id2) && readSecretGaLock()) return;
       updateState((prev) => {
         const key = avoidPairKey(pair);
         if (prev.avoidPairs.some((p) => avoidPairKey(p) === key)) return prev;

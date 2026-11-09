@@ -26,6 +26,7 @@ import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { RoleIcon } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { useAvoidPairs } from "@/hooks/use-avoid-pairs";
+import { useSecretGaLock } from "@/hooks/use-secret-ga-lock";
 import { useTogetherPairs } from "@/hooks/use-together-pairs";
 import { useDraftHistory } from "@/hooks/use-draft-history";
 import { usePrizePoints } from "@/hooks/use-prize-points";
@@ -75,6 +76,7 @@ export function HistoryView() {
   const { prefs: rolePrefs } = useRolePrefs();
   const { pairs: avoidPairs } = useAvoidPairs();
   const { pairs: togetherPairs } = useTogetherPairs();
+  const { enabled: secretGaLock } = useSecretGaLock();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showManual, setShowManual] = useState(false);
@@ -131,7 +133,8 @@ export function HistoryView() {
         overrides,
         rolePrefs,
         avoidPairs,
-        togetherPairs
+        togetherPairs,
+        secretGaLock
       );
       addDraft(next);
       setSelectedId(next.id);

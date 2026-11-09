@@ -1,4 +1,5 @@
 import { getPlayersByIds } from "@/data/players";
+import { mergeTogetherPairs } from "@/lib/built-in-together";
 import {
   buildTeam,
   canPlayRole,
@@ -385,18 +386,31 @@ export function generateRoleConsiderDraft(
 }
 
 /**
- * Normal: anyone anywhere. No role prefs, MMR, tier fairness, or pair constraints.
+ * Normal: anyone anywhere. No role prefs / MMR / tier fairness.
+ * Still honors keep-apart / keep-together (incl. secret Gabriel↔Aman lock).
  */
-export function generateNormalDraft(players: Player[]): DraftResult {
+export function generateNormalDraft(
+  players: Player[],
+  avoidPairs?: AvoidPairs,
+  togetherPairs?: TogetherPairs
+): DraftResult {
   if (players.length !== 10) {
     throw new Error("Normal draft requires exactly 10 players");
   }
 
-  const shuffled = shuffle(players);
-  const blue = assignRolesBlind(shuffled.slice(0, 5));
-  const red = assignRolesBlind(shuffled.slice(5));
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const shuffled = shuffle(players);
+    const blue = assignRolesBlind(shuffled.slice(0, 5));
+    const red = assignRolesBlind(shuffled.slice(5));
+    if (violatesTeamConstraints(blue, red, avoidPairs, togetherPairs)) {
+      continue;
+    }
+    return finalizeDraft("normal", blue, red, players.map((p) => p.id));
+  }
 
-  return finalizeDraft("normal", blue, red, players.map((p) => p.id));
+  throw new Error(
+    "Could not build teams with current team constraints. Loosen keep-apart or keep-together pairs."
+  );
 }
 
 export function generateDraft(
@@ -405,15 +419,18 @@ export function generateDraft(
   overrides?: RatingsOverride,
   rolePrefs?: RolePrefsOverride,
   avoidPairs?: AvoidPairs,
-  togetherPairs?: TogetherPairs
+  togetherPairs?: TogetherPairs,
+  /** Secret Gabriel↔Aman lock; default on when omitted. */
+  secretGaLock = true
 ): DraftResult {
+  const mergedTogether = mergeTogetherPairs(togetherPairs, secretGaLock);
   if (mode === "competitive" || mode === "manual") {
     return generateCompetitiveDraft(
       players,
       overrides,
       rolePrefs,
       avoidPairs,
-      togetherPairs
+      mergedTogether
     );
   }
   if (mode === "role-consider") {
@@ -422,10 +439,10 @@ export function generateDraft(
       overrides,
       rolePrefs,
       avoidPairs,
-      togetherPairs
+      mergedTogether
     );
   }
-  return generateNormalDraft(players);
+  return generateNormalDraft(players, avoidPairs, mergedTogether);
 }
 
 /** Build a draft from exact role lineups (for past games / manual history). */

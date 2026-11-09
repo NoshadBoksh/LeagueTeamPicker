@@ -385,15 +385,9 @@ export function generateRoleConsiderDraft(
 }
 
 /**
- * Normal: anyone anywhere. No role prefs, MMR, or tier fairness.
+ * Normal: anyone anywhere. No role prefs, MMR, tier fairness, or pair constraints.
  */
-export function generateNormalDraft(
-  players: Player[],
-  _overrides?: RatingsOverride,
-  _rolePrefs?: RolePrefsOverride,
-  _avoidPairs?: AvoidPairs,
-  _togetherPairs?: TogetherPairs
-): DraftResult {
+export function generateNormalDraft(players: Player[]): DraftResult {
   if (players.length !== 10) {
     throw new Error("Normal draft requires exactly 10 players");
   }
@@ -431,13 +425,7 @@ export function generateDraft(
       togetherPairs
     );
   }
-  return generateNormalDraft(
-    players,
-    overrides,
-    rolePrefs,
-    avoidPairs,
-    togetherPairs
-  );
+  return generateNormalDraft(players);
 }
 
 /** Build a draft from exact role lineups (for past games / manual history). */

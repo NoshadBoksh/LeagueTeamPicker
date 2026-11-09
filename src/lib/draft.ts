@@ -1,9 +1,5 @@
 import { getPlayersByIds } from "@/data/players";
 import {
-  isBotMatchupLobby,
-  isBotMatchupPlayer,
-} from "@/lib/bot-lane-duos";
-import {
   buildTeam,
   canPlayRole,
   computeBalanceScore,
@@ -226,203 +222,6 @@ function assignRolesBlind(players: Player[]): AssignedPlayer[] {
   }));
 }
 
-/**
- * Assign 5 players with some roles locked by player id
- * (used for Gerard ADC / Lily Support / Karthik ADC / Gabriel Support).
- */
-function assignRolesWithFixed(
-  players: Player[],
-  fixedByPlayerId: Record<string, Role>,
-  overrides?: RatingsOverride,
-  randomize = false,
-  rolePrefs?: RolePrefsOverride,
-  blind = false
-): AssignedPlayer[] | null {
-  if (players.length !== 5) {
-    throw new Error("Role assignment requires exactly 5 players");
-  }
-
-  const map: Partial<RoleMap> = {};
-  const usedRoles = new Set<Role>();
-
-  for (const player of players) {
-    const locked = fixedByPlayerId[player.id];
-    if (!locked) continue;
-    if (usedRoles.has(locked)) return null;
-    map[locked] = player;
-    usedRoles.add(locked);
-  }
-
-  const flexPlayers = players.filter((p) => !fixedByPlayerId[p.id]);
-  const openRoles = ROLES.filter((r) => !usedRoles.has(r));
-  if (flexPlayers.length !== openRoles.length) return null;
-
-  if (blind) {
-    const roles = shuffle(openRoles);
-    const order = shuffle(flexPlayers);
-    order.forEach((player, i) => {
-      map[roles[i]] = player;
-    });
-    return ROLES.map((role) => {
-      const player = map[role]!;
-      return {
-        playerId: player.id,
-        name: player.name,
-        role,
-        tier: "C" as const,
-        mmr: 0,
-        generalTier: null,
-        generalMmr: 0,
-        preference: "autofill" as const,
-        autofilled: false,
-      };
-    });
-  }
-
-  const orderedFlex = randomize ? shuffle(flexPlayers) : [...flexPlayers];
-  let best: RoleMap | null = null;
-  let bestCost = Infinity;
-
-  function search(
-    index: number,
-    taken: Set<Role>,
-    current: Partial<RoleMap>
-  ) {
-    if (index === orderedFlex.length) {
-      const full = current as RoleMap;
-      const cost = assignmentCost(full, overrides, rolePrefs);
-      const jitter = randomize ? Math.random() * 0.5 : 0;
-      if (cost + jitter < bestCost) {
-        bestCost = cost + jitter;
-        best = { ...full };
-      }
-      return;
-    }
-
-    const player = orderedFlex[index];
-    const playable = openRoles.filter(
-      (role) =>
-        !taken.has(role) && canPlayRole(player, role, overrides, rolePrefs)
-    );
-    const ranked = [...playable].sort((a, b) => {
-      const pa = preferenceScore(player, a, rolePrefs);
-      const pb = preferenceScore(player, b, rolePrefs);
-      if (pa !== pb) return pa - pb;
-      return randomize ? Math.random() - 0.5 : 0;
-    });
-
-    for (const role of ranked) {
-      taken.add(role);
-      current[role] = player;
-      search(index + 1, taken, current);
-      delete current[role];
-      taken.delete(role);
-      if (bestCost === 0 && !randomize) return;
-    }
-  }
-
-  search(0, new Set(usedRoles), { ...map });
-  if (!best) return null;
-
-  return ROLES.map((role) =>
-    toAssignedPlayer(best![role], role, overrides, rolePrefs)
-  );
-}
-
-function fixedRolesForDuo(
-  includesGerardLily: boolean
-): Record<string, Role> {
-  return includesGerardLily
-    ? { gerard: "adc", lily: "support" }
-    : { karthik: "adc", gabriel: "support" };
-}
-
-/**
- * When Gerard, Lily, Karthik, and Gabriel are all in the 10:
- * Gerard+Lily bot (ADC/Support) vs Karthik+Gabriel bot (ADC/Support).
- */
-function tryGenerateBotMatchupDraft(
-  mode: DraftMode,
-  players: Player[],
-  overrides?: RatingsOverride,
-  rolePrefs?: RolePrefsOverride,
-  avoidPairs?: AvoidPairs,
-  togetherPairs?: TogetherPairs
-): DraftResult | null {
-  if (!isBotMatchupLobby(players.map((p) => p.id))) return null;
-
-  const byId = new Map(players.map((p) => [p.id, p]));
-  const rest = players.filter((p) => !isBotMatchupPlayer(p.id));
-  if (rest.length !== 6) return null;
-
-  const attempts = mode === "competitive" ? 600 : 300;
-  let bestScore = Infinity;
-  let bestBlue: AssignedPlayer[] | null = null;
-  let bestRed: AssignedPlayer[] | null = null;
-
-  for (let i = 0; i < attempts; i++) {
-    const shuffled = shuffle(rest);
-    const left3 = shuffled.slice(0, 3);
-    const right3 = shuffled.slice(3);
-    const glIsBlue = Math.random() < 0.5;
-
-    const bluePlayers = glIsBlue
-      ? [byId.get("gerard")!, byId.get("lily")!, ...left3]
-      : [byId.get("karthik")!, byId.get("gabriel")!, ...left3];
-    const redPlayers = glIsBlue
-      ? [byId.get("karthik")!, byId.get("gabriel")!, ...right3]
-      : [byId.get("gerard")!, byId.get("lily")!, ...right3];
-
-    const blueFixed = fixedRolesForDuo(glIsBlue);
-    const redFixed = fixedRolesForDuo(!glIsBlue);
-
-    const blind = mode === "normal";
-    const randomize = mode !== "competitive";
-
-    const blue = assignRolesWithFixed(
-      bluePlayers,
-      blueFixed,
-      overrides,
-      randomize,
-      rolePrefs,
-      blind
-    );
-    const red = assignRolesWithFixed(
-      redPlayers,
-      redFixed,
-      overrides,
-      randomize,
-      rolePrefs,
-      blind
-    );
-    if (!blue || !red) continue;
-    if (violatesTeamConstraints(blue, red, avoidPairs, togetherPairs)) continue;
-
-    if (mode === "competitive") {
-      const score = scoreCompetitiveSplit(blue, red);
-      if (score < bestScore) {
-        bestScore = score;
-        bestBlue = blue;
-        bestRed = red;
-      }
-      continue;
-    }
-
-    return finalizeDraft(mode, blue, red, players.map((p) => p.id));
-  }
-
-  if (mode === "competitive" && bestBlue && bestRed) {
-    return finalizeDraft(
-      "competitive",
-      bestBlue,
-      bestRed,
-      players.map((p) => p.id)
-    );
-  }
-
-  return null;
-}
-
 function scoreCompetitiveSplit(
   blue: AssignedPlayer[],
   red: AssignedPlayer[]
@@ -463,16 +262,6 @@ export function generateCompetitiveDraft(
   if (players.length !== 10) {
     throw new Error("Competitive draft requires exactly 10 players");
   }
-
-  const forced = tryGenerateBotMatchupDraft(
-    "competitive",
-    players,
-    overrides,
-    rolePrefs,
-    avoidPairs,
-    togetherPairs
-  );
-  if (forced) return forced;
 
   let bestScore = Infinity;
   let bestBlue: AssignedPlayer[] | null = null;
@@ -575,16 +364,6 @@ export function generateRoleConsiderDraft(
     throw new Error("Role Consider draft requires exactly 10 players");
   }
 
-  const forced = tryGenerateBotMatchupDraft(
-    "role-consider",
-    players,
-    overrides,
-    rolePrefs,
-    avoidPairs,
-    togetherPairs
-  );
-  if (forced) return forced;
-
   for (let attempt = 0; attempt < 300; attempt++) {
     const shuffled = shuffle(players);
     const blue = assignRoles(shuffled.slice(0, 5), overrides, true, rolePrefs);
@@ -610,24 +389,14 @@ export function generateRoleConsiderDraft(
  */
 export function generateNormalDraft(
   players: Player[],
-  overrides?: RatingsOverride,
-  rolePrefs?: RolePrefsOverride,
-  avoidPairs?: AvoidPairs,
-  togetherPairs?: TogetherPairs
+  _overrides?: RatingsOverride,
+  _rolePrefs?: RolePrefsOverride,
+  _avoidPairs?: AvoidPairs,
+  _togetherPairs?: TogetherPairs
 ): DraftResult {
   if (players.length !== 10) {
     throw new Error("Normal draft requires exactly 10 players");
   }
-
-  const forced = tryGenerateBotMatchupDraft(
-    "normal",
-    players,
-    overrides,
-    rolePrefs,
-    avoidPairs,
-    togetherPairs
-  );
-  if (forced) return forced;
 
   const shuffled = shuffle(players);
   const blue = assignRolesBlind(shuffled.slice(0, 5));

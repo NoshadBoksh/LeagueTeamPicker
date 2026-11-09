@@ -1,10 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { RoleIcon } from "@/components/ui/role-icon";
 import { TierBadge } from "@/components/ui/tier-badge";
+import { SECRET_GA_LOCK_PLAYER_ID } from "@/lib/built-in-together";
 import { getPlayerRolePrefs } from "@/lib/role-prefs";
 import { getBestTierSummary } from "@/lib/ratings";
 import {
@@ -15,6 +17,8 @@ import {
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+const DOUBLE_TAP_MS = 340;
+
 interface PlayerCardProps {
   player: Player;
   selected: boolean;
@@ -22,6 +26,8 @@ interface PlayerCardProps {
   overrides?: RatingsOverride;
   rolePrefs?: RolePrefsOverride;
   disabled?: boolean;
+  /** Secret double-tap on Gabriel — returns whether lock is now on. */
+  onSecretDoubleTap?: () => boolean;
 }
 
 export function PlayerCard({
@@ -31,6 +37,7 @@ export function PlayerCard({
   overrides,
   rolePrefs,
   disabled,
+  onSecretDoubleTap,
 }: PlayerCardProps) {
   const best = getBestTierSummary(player, overrides);
   const prefs = getPlayerRolePrefs(rolePrefs ?? {}, player.id);
@@ -38,6 +45,26 @@ export function PlayerCard({
   const label = prefs.fill
     ? "FILL"
     : prefs.roles.map((r) => ROLE_LABELS[r]).join(" · ") || "No roles";
+
+  const lastTapRef = useRef(0);
+  const [flash, setFlash] = useState<"on" | "off" | null>(null);
+
+  const handleClick = () => {
+    const now = Date.now();
+    const isSecretTarget =
+      player.id === SECRET_GA_LOCK_PLAYER_ID && Boolean(onSecretDoubleTap);
+
+    if (isSecretTarget && now - lastTapRef.current < DOUBLE_TAP_MS) {
+      lastTapRef.current = 0;
+      const nowOn = onSecretDoubleTap!();
+      setFlash(nowOn ? "on" : "off");
+      window.setTimeout(() => setFlash(null), 480);
+      return;
+    }
+
+    lastTapRef.current = now;
+    onToggle();
+  };
 
   return (
     <motion.button
@@ -50,7 +77,7 @@ export function PlayerCard({
         opacity: selected ? 1 : disabled ? 0.4 : 0.85,
       }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      onClick={onToggle}
+      onClick={handleClick}
       disabled={disabled && !selected}
       className={cn(
         "group relative flex w-full flex-col items-start gap-4 overflow-hidden rounded-[10px] border p-5 text-left transition-colors",
@@ -60,6 +87,24 @@ export function PlayerCard({
         disabled && !selected && "cursor-not-allowed"
       )}
     >
+      <AnimatePresence>
+        {flash && (
+          <motion.div
+            key={flash}
+            initial={{ opacity: 0.55 }}
+            animate={{ opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className={cn(
+              "pointer-events-none absolute inset-0 rounded-[10px] ring-1",
+              flash === "on"
+                ? "bg-emerald-400/15 ring-emerald-400/35"
+                : "bg-white/[0.04] ring-white/15"
+            )}
+          />
+        )}
+      </AnimatePresence>
+
       {selected && (
         <motion.div
           initial={{ scale: 0 }}

@@ -1,53 +1,67 @@
-/** Quiet house edge: Gerard lands about once every 10 spins when he's on the wheel. */
-const RIGGED_PLAYER_ID = "gerard";
-const RIGGED_ODDS = 1 / 10;
-
-/** Never award a prize point to these players — they stay off the winner pool. */
-const EXCLUDED_FROM_SPIN = new Set(["lily"]);
+/**
+ * Quiet spinner weights when present on the wheel:
+ * - Laxus ~2/5 (favored)
+ * - Gerard ~1/10 (less likely, still can win)
+ * Everyone else shares the remaining probability evenly.
+ * No one is fully excluded.
+ */
+const LAXUS_ID = "laxus";
+const LAXUS_ODDS = 2 / 5;
+const GERARD_ID = "gerard";
+const GERARD_ODDS = 1 / 10;
 
 /**
  * Pick a winner index for the prize wheel.
- * Lily is never chosen. Gerard is weighted to ~1/10 when present among the rest.
  */
 export function pickSpinWinnerIndex(playerIds: string[]): number {
   const n = playerIds.length;
   if (n <= 0) return 0;
   if (n === 1) return 0;
 
-  const eligible = playerIds
-    .map((id, index) => ({ id, index }))
-    .filter(({ id }) => !EXCLUDED_FROM_SPIN.has(id));
-
-  if (eligible.length === 0) {
-    return Math.floor(Math.random() * n);
-  }
-
-  if (eligible.length === 1) {
-    return eligible[0].index;
-  }
-
-  const eligibleIds = eligible.map((e) => e.id);
-  const local = pickWeightedAmongEligible(eligibleIds);
-  return eligible[local].index;
-}
-
-function pickWeightedAmongEligible(playerIds: string[]): number {
-  const n = playerIds.length;
-  const riggedIndex = playerIds.indexOf(RIGGED_PLAYER_ID);
-  if (riggedIndex === -1) {
-    return Math.floor(Math.random() * n);
-  }
-
-  const otherCount = n - 1;
-  const otherWeight = (1 - RIGGED_ODDS) / otherCount;
-  const weights = playerIds.map((id) =>
-    id === RIGGED_PLAYER_ID ? RIGGED_ODDS : otherWeight
-  );
-
+  const weights = buildWeights(playerIds);
   let roll = Math.random();
   for (let i = 0; i < weights.length; i++) {
     roll -= weights[i];
     if (roll <= 0) return i;
   }
   return n - 1;
+}
+
+function buildWeights(playerIds: string[]): number[] {
+  const n = playerIds.length;
+  const hasLaxus = playerIds.includes(LAXUS_ID);
+  const hasGerard = playerIds.includes(GERARD_ID);
+
+  let reserved = 0;
+  if (hasLaxus) reserved += LAXUS_ODDS;
+  if (hasGerard) reserved += GERARD_ODDS;
+
+  const otherIndexes: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const id = playerIds[i];
+    if (id === LAXUS_ID || id === GERARD_ID) continue;
+    otherIndexes.push(i);
+  }
+
+  const weights = new Array(n).fill(0);
+
+  if (otherIndexes.length === 0) {
+    // Only weighted players on the wheel — renormalize their odds.
+    const total =
+      (hasLaxus ? LAXUS_ODDS : 0) + (hasGerard ? GERARD_ODDS : 0);
+    for (let i = 0; i < n; i++) {
+      if (playerIds[i] === LAXUS_ID) weights[i] = LAXUS_ODDS / total;
+      else if (playerIds[i] === GERARD_ID) weights[i] = GERARD_ODDS / total;
+    }
+    return weights;
+  }
+
+  const otherWeight = (1 - reserved) / otherIndexes.length;
+  for (let i = 0; i < n; i++) {
+    const id = playerIds[i];
+    if (id === LAXUS_ID) weights[i] = LAXUS_ODDS;
+    else if (id === GERARD_ID) weights[i] = GERARD_ODDS;
+    else weights[i] = otherWeight;
+  }
+  return weights;
 }
